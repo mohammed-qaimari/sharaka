@@ -234,9 +234,26 @@ tr:hover td{background:#fafafa;}
           <input id="adjv" type="number" min="0" step="any" placeholder="0" inputmode="decimal" oninput="calcIv()"/>
           <span class="adjprev" id="adjp"></span>
         </div>
+        <div class="adjrow" style="margin-top:6px;padding-top:8px;border-top:1px dashed var(--bd);">
+          <label>تعديل الربح المقسوم:</label>
+          <select id="pradjt" onchange="calcIv()">
+            <option value="">بدون تعديل</option>
+            <option value="add">زيادة ₪</option>
+            <option value="sub">نقصان ₪</option>
+          </select>
+          <input id="pradjv" type="number" min="0" step="any" placeholder="0" inputmode="decimal" oninput="calcIv()"/>
+          <span class="adjprev" id="pradjp" style="color:var(--b)"></span>
+        </div>
         <div class="ivsum">
           <span class="ivsum-l">إجمالي الفاتورة</span>
           <span class="ivsum-v" id="ivtot">₪0.00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#EEF4FB;border-radius:6px;margin-top:6px;">
+          <span style="font-size:13px;color:var(--b);">الربح المقسوم (محمد + محمود)</span>
+          <span style="font-size:16px;font-weight:600;color:var(--b);" id="iv-profit-preview">₪0.00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--tm);padding:4px 14px;">
+          <span>نصيب محمد</span><span id="iv-share-preview">₪0.00</span>
         </div>
         <div style="margin-top:11px;display:flex;gap:8px;">
           <button class="ba" id="btn-submit-iv" onclick="submitIv()" style="flex:1;">✓ تسجيل الفاتورة</button>
@@ -646,7 +663,22 @@ function calcIv(){
   else if(t==='ap'){tot=sub*(1+v/100);prev=`زيادة ${v}%`;}
   document.getElementById('adjp').textContent=prev?`(${prev} — قبل التعديل: ${fmt(sub)})`:'';
   document.getElementById('ivtot').textContent=fmt(tot);
-  return{sub,tot,adj:tot-sub};
+
+  // تعديل الربح
+  const pradjt=document.getElementById('pradjt').value;
+  const pradjv=parseFloat(document.getElementById('pradjv').value)||0;
+  // الربح الأساسي = الإجمالي - التكلفة (سيُحسب عند الحفظ)
+  // هنا نعرض المعاينة فقط
+  const estCost=LINES.reduce((s,l)=>{const it=INV.find(i=>String(i.id)===String(l.itemId));return s+(it?it.cost*l.qty:0);},0);
+  let baseProfit=tot-estCost;
+  let finalProfit=baseProfit;
+  let pradjprev='';
+  if(pradjt==='add'){finalProfit=baseProfit+pradjv;pradjprev=`+₪${pradjv.toFixed(2)}`;}
+  else if(pradjt==='sub'){finalProfit=baseProfit-pradjv;pradjprev=`-₪${pradjv.toFixed(2)}`;}
+  document.getElementById('pradjp').textContent=pradjprev?`(تعديل الربح: ${pradjprev})`:'';
+  document.getElementById('iv-profit-preview').textContent=fmt(finalProfit);
+  document.getElementById('iv-share-preview').textContent=fmt(finalProfit*0.5);
+  return{sub,tot,adj:tot-sub,pradjt,pradjv};
 }
 
 async function submitIv(){
@@ -660,9 +692,11 @@ async function submitIv(){
   const btn=document.getElementById('btn-submit-iv');
   btn.disabled=true;btn.textContent='جارٍ الحفظ...';
   try{
-    const{sub,tot,adj}=calcIv();
+    const{sub,tot,adj,pradjt,pradjv}=calcIv();
     const tc=vl.reduce((s,l)=>{const it=INV.find(i=>String(i.id)===String(l.itemId));return s+(it?it.cost*l.qty:0);},0);
-    const profit=tot-tc;
+    let profit=tot-tc;
+    if(pradjt==='add') profit=profit+pradjv;
+    else if(pradjt==='sub') profit=profit-pradjv;
     const nm=vl.map(l=>{const it=INV.find(i=>String(i.id)===String(l.itemId));return`${it?.name||'?'} ×${l.qty} بـ${fmt(l.price)}`;}).join('، ');
     const tq=vl.reduce((s,l)=>s+l.qty,0);
     const saleData={item_name:nm,qty:tq,price:parseFloat((tot/Math.max(1,tq)).toFixed(2)),total:parseFloat(tot.toFixed(2)),profit:parseFloat(profit.toFixed(2)),cost:parseFloat((tc/Math.max(1,tq)).toFixed(2)),sold_by:UN,sale_date:today(),adj_amount:parseFloat(adj.toFixed(2)),items_json:JSON.stringify(vl.map(l=>({itemId:l.itemId,itemName:INV.find(i=>String(i.id)===String(l.itemId))?.name||'',qty:l.qty,price:l.price})))};
@@ -679,6 +713,11 @@ function clearIv(){
   document.getElementById('adjt').value='';
   document.getElementById('adjv').value='';
   document.getElementById('adjp').textContent='';
+  document.getElementById('pradjt').value='';
+  document.getElementById('pradjv').value='';
+  document.getElementById('pradjp').textContent='';
+  document.getElementById('iv-profit-preview').textContent='₪0.00';
+  document.getElementById('iv-share-preview').textContent='₪0.00';
   document.getElementById('ivtot').textContent='₪0.00';
 }
 

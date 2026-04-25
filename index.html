@@ -510,6 +510,11 @@ function showInvoice(id){
       <span style="color:#6b7280;">الربح الإجمالي</span>
       <span style="color:#1D9E75;font-weight:600;">${fmt(s.profit)}</span>
     </div>
+    ${s.profit_adj&&s.profit_adj!==0?`
+    <div style="display:flex;justify-content:space-between;padding:6px 14px;font-size:12px;color:#6b7280;">
+      <span>تعديل الربح</span>
+      <span style="color:${s.profit_adj>0?'#1D9E75':'#E24B4A'};font-weight:600;">${s.profit_adj>0?'+':''}${fmt(s.profit_adj)}</span>
+    </div>`:''}
     <div style="background:#EEF4FB;border-radius:8px;padding:10px 14px;margin-top:8px;">
       <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
         <span style="color:#185FA5;font-weight:500;">نصيب محمد (50%)</span>
@@ -709,7 +714,7 @@ async function submitIv(){
     else if(pradjt==='sub') profit=profit-pradjv;
     const nm=vl.map(l=>{const it=INV.find(i=>String(i.id)===String(l.itemId));return`${it?.name||'?'} ×${l.qty} بـ${fmt(l.price)}`;}).join('، ');
     const tq=vl.reduce((s,l)=>s+l.qty,0);
-    const saleData={item_name:nm,qty:tq,price:parseFloat((tot/Math.max(1,tq)).toFixed(2)),total:parseFloat(tot.toFixed(2)),profit:parseFloat(profit.toFixed(2)),cost:parseFloat((tc/Math.max(1,tq)).toFixed(2)),sold_by:UN,sale_date:today(),adj_amount:parseFloat(adj.toFixed(2)),items_json:JSON.stringify(vl.map(l=>({itemId:l.itemId,itemName:INV.find(i=>String(i.id)===String(l.itemId))?.name||'',qty:l.qty,price:l.price})))};
+    const saleData={item_name:nm,qty:tq,price:parseFloat((tot/Math.max(1,tq)).toFixed(2)),total:parseFloat(tot.toFixed(2)),profit:parseFloat(profit.toFixed(2)),cost:parseFloat((tc/Math.max(1,tq)).toFixed(2)),sold_by:UN,sale_date:today(),adj_amount:parseFloat(adj.toFixed(2)),profit_adj:parseFloat((pradjt==='add'?pradjv:pradjt==='sub'?-pradjv:0).toFixed(2)),items_json:JSON.stringify(vl.map(l=>({itemId:l.itemId,itemName:INV.find(i=>String(i.id)===String(l.itemId))?.name||'',qty:l.qty,price:l.price})))};
     const{error:se}=await sb.from('sales').insert(saleData);
     if(se){alert('خطأ في حفظ الفاتورة: '+se.message);return;}
     await Promise.all(vl.map(l=>{const it=INV.find(i=>String(i.id)===String(l.itemId));return sb.from('inventory').update({qty:it.qty-l.qty}).eq('id',it.id);}));

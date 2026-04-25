@@ -506,9 +506,19 @@ function showInvoice(id){
       <span style="font-weight:600;color:#0F6E56;font-size:14px;">إجمالي الفاتورة</span>
       <span style="font-size:22px;font-weight:700;color:#1D9E75;">${fmt(s.total)}</span>
     </div>
-    <div style="display:flex;justify-content:space-between;padding:8px 14px;font-size:13px;">
-      <span style="color:#6b7280;">الربح</span>
+    <div style="display:flex;justify-content:space-between;padding:8px 14px;font-size:13px;border-bottom:1px solid #f3f4f6;">
+      <span style="color:#6b7280;">الربح الإجمالي</span>
       <span style="color:#1D9E75;font-weight:600;">${fmt(s.profit)}</span>
+    </div>
+    <div style="background:#EEF4FB;border-radius:8px;padding:10px 14px;margin-top:8px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+        <span style="color:#185FA5;font-weight:500;">نصيب محمد (50%)</span>
+        <span style="color:#185FA5;font-weight:700;">${fmt(s.profit*0.5)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;">
+        <span style="color:#185FA5;font-weight:500;">نصيب محمود (50%)</span>
+        <span style="color:#185FA5;font-weight:700;">${fmt(s.profit*0.5)}</span>
+      </div>
     </div>`;
   document.getElementById('iv-modal').style.display='flex';
 }

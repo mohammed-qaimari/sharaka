@@ -352,8 +352,20 @@ tr:hover td{background:#fafafa;}
     <!-- REPORT -->
     <div id="pan-rep" class="pan">
       <div style="background:var(--gl);border:1px solid #9FE1CB;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--gd);">
-        ℹ️ الأرباح تُقسم على الربح الإجمالي من المبيعات فقط — المصاريف مسجّلة للمعلومية ولا تُخصم من الأرباح
+        ℹ️ الأرباح تُقسم على الربح الإجمالي من المبيعات فقط — المصاريف للمعلومية ولا تُخصم من الأرباح
       </div>
+
+      <!-- الشهر الحالي -->
+      <div style="font-size:12px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">📅 الشهر النشط (بعد التصفير)</div>
+      <div class="mg" style="margin-bottom:20px;">
+        <div class="mk"><div class="ml">إيراد الشهر</div><div class="mv g" id="rr-m">₪0.00</div></div>
+        <div class="mk"><div class="ml">ربح الشهر</div><div class="mv g" id="rp-m">₪0.00</div></div>
+        <div class="mk"><div class="ml">نصيب محمد</div><div class="mv b" id="ry-m">₪0.00</div></div>
+        <div class="mk"><div class="ml">نصيب محمود</div><div class="mv b" id="rm-m">₪0.00</div></div>
+      </div>
+
+      <!-- منذ البداية -->
+      <div style="font-size:12px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">🏦 إجمالي منذ البداية (كل الفواتير)</div>
       <div class="mg">
         <div class="mk"><div class="ml">إجمالي الإيراد</div><div class="mv g" id="rr">₪0.00</div></div>
         <div class="mk"><div class="ml">تكلفة المبيعات</div><div class="mv a" id="rc">₪0.00</div></div>
@@ -362,7 +374,8 @@ tr:hover td{background:#fafafa;}
         <div class="mk"><div class="ml">نصيب محمود 50%</div><div class="mv b" id="rm">₪0.00</div></div>
         <div class="mk"><div class="ml">المصاريف المسجّلة</div><div class="mv r" id="re">₪0.00</div></div>
       </div>
-      <div class="tbar">
+
+      <div class="tbar" style="margin-top:16px;">
         <button class="be" onclick="expFull()">⬇ تصدير كامل Excel</button>
       </div>
       <div class="tw">
@@ -741,17 +754,21 @@ function renderHist(){
   const m=document.getElementById('fil-month').value;
   const filtered=SAL.filter(s=>s.sale_date?.startsWith(m));
   const tb=document.getElementById('stb');
-  if(!filtered.length){tb.innerHTML='<tr class="er"><td colspan="7">لا توجد مبيعات في هذا الشهر</td></tr>';}
+  if(!filtered.length){tb.innerHTML='<tr class="er"><td colspan="8">لا توجد مبيعات في هذا الشهر</td></tr>';}
   else{
     tb.innerHTML=filtered.map(s=>{
       const t=new Date(s.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
       const adj=s.adj_amount&&s.adj_amount!==0?`<span style="color:${s.adj_amount<0?'var(--r)':'var(--g)'};">${s.adj_amount>0?'+':''}${fmt(s.adj_amount)}</span>`:'—';
-      return`<tr><td style="color:var(--tm);font-size:12px">${s.sale_date} ${t}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.item_name}">${s.item_name}</td><td>${fmt(s.total)}</td><td>${adj}</td><td style="color:var(--g);font-weight:600">${fmt(s.profit)}</td><td><span class="wtag">${s.sold_by||'—'}</span></td><td><button onclick="showInvoice('${s.id}')" style="background:none;border:1px solid var(--bd);border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--b);">عرض</button></td><td><button class="del" onclick="delSal('${s.id}')">×</button></td></tr>`;
+      const clearedBadge=s.is_cleared?'<span style="background:#fee2e2;color:#b91c1c;font-size:10px;padding:2px 6px;border-radius:10px;margin-right:4px;">مُصفَّر</span>':'';
+      const rowStyle=s.is_cleared?'opacity:0.5;':'';
+      return`<tr style="${rowStyle}"><td style="color:var(--tm);font-size:12px">${s.sale_date} ${t}${clearedBadge}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.item_name}">${s.item_name}</td><td>${fmt(s.total)}</td><td>${adj}</td><td style="color:var(--g);font-weight:600">${fmt(s.profit)}</td><td><span class="wtag">${s.sold_by||'—'}</span></td><td><button onclick="showInvoice('${s.id}')" style="background:none;border:1px solid var(--bd);border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--b);">عرض</button></td><td><button class="del" onclick="delSal('${s.id}')">×</button></td></tr>`;
     }).join('');
   }
-  const rev=filtered.reduce((s,x)=>s+x.total,0);
-  const profit=filtered.reduce((s,x)=>s+x.profit,0);
-  document.getElementById('mto').textContent=filtered.length;
+  // الإحصائيات تستثني المُصفَّرة
+  const active=filtered.filter(s=>!s.is_cleared);
+  const rev=active.reduce((s,x)=>s+x.total,0);
+  const profit=active.reduce((s,x)=>s+x.profit,0);
+  document.getElementById('mto').textContent=active.length;
   document.getElementById('mtr').textContent=fmt(rev);
   document.getElementById('mtp').textContent=fmt(profit);
   document.getElementById('mts').textContent=fmt(profit*0.5);
@@ -774,10 +791,10 @@ async function delSal(id){
 async function resetMonth(){
   const m=document.getElementById('fil-month').value;
   const mn=document.querySelector('#fil-month option:checked').textContent;
-  if(!confirm(`تصفير مبيعات ${mn}؟ لا يمكن التراجع.`))return;
-  const ids=SAL.filter(s=>s.sale_date?.startsWith(m)).map(s=>s.id);
-  if(!ids.length){alert('لا توجد مبيعات في هذا الشهر');return;}
-  await sb.from('sales').delete().in('id',ids);
+  if(!confirm(`تصفير مبيعات ${mn}؟ ستبقى الفواتير موجودة لكن لن تُحسب في الإحصائيات.`))return;
+  const ids=SAL.filter(s=>s.sale_date?.startsWith(m)&&!s.is_cleared).map(s=>s.id);
+  if(!ids.length){alert('لا توجد مبيعات نشطة في هذا الشهر');return;}
+  await sb.from('sales').update({is_cleared:true}).in('id',ids);
   await load();
 }
 
@@ -812,17 +829,30 @@ function rExp(){
 
 // ── REPORT ──
 function rRep(){
+  // كل الفواتير منذ البداية
+  const allSales=SAL;
+  const activeSales=SAL.filter(s=>!s.is_cleared);
+  // الشهر الحالي النشط
+  const curM=curMonth();
+  const curActive=SAL.filter(s=>s.sale_date?.startsWith(curM)&&!s.is_cleared);
+  const mRev=curActive.reduce((s,x)=>s+x.total,0);
+  const mProfit=curActive.reduce((s,x)=>s+x.profit,0);
+  document.getElementById('rr-m').textContent=fmt(mRev);
+  document.getElementById('rp-m').textContent=fmt(mProfit);
+  document.getElementById('ry-m').textContent=fmt(mProfit*0.5);
+  document.getElementById('rm-m').textContent=fmt(mProfit*0.5);
+  // إجمالي منذ البداية (كل الفواتير بدون استثناء)
   const byi={};
-  SAL.forEach(s=>{
+  allSales.forEach(s=>{
     const k=s.item_name||'غير محدد';
     if(!byi[k])byi[k]={qty:0,rev:0,cost:0,profit:0};
     byi[k].qty+=s.qty;byi[k].rev+=s.total;byi[k].cost+=(s.cost||0)*s.qty;byi[k].profit+=s.profit;
   });
   const rows=Object.entries(byi),tb=document.getElementById('rtb');
-  tb.innerHTML=rows.length?rows.map(([n,d])=>`<tr><td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${n}">${n}</td><td>${d.qty}</td><td style="color:var(--g)">${fmt(d.rev)}</td><td style="color:var(--a)">${fmt(d.cost)}</td><td style="color:var(--g);font-weight:600">${fmt(d.profit)}</td><td style="color:var(--b);font-weight:600">${fmt(d.profit*0.5)}</td><td style="color:var(--b);font-weight:600">${fmt(d.profit*0.5)}</td></tr>`).join(''):'<tr class="er"><td colspan="7">لا توجد مبيعات بعد</td></tr>';
-  const tr=SAL.reduce((s,x)=>s+x.total,0);
-  const tc=SAL.reduce((s,x)=>s+(x.cost||0)*x.qty,0);
-  const tp=SAL.reduce((s,x)=>s+x.profit,0);
+  tb.innerHTML=rows.length?rows.map(([n,d])=>`<tr><td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n}</td><td>${d.qty}</td><td style="color:var(--g)">${fmt(d.rev)}</td><td style="color:var(--a)">${fmt(d.cost)}</td><td style="color:var(--g);font-weight:600">${fmt(d.profit)}</td><td style="color:var(--b);font-weight:600">${fmt(d.profit*0.5)}</td><td style="color:var(--b);font-weight:600">${fmt(d.profit*0.5)}</td></tr>`).join(''):'<tr class="er"><td colspan="7">لا توجد مبيعات بعد</td></tr>';
+  const tr=allSales.reduce((s,x)=>s+x.total,0);
+  const tc=allSales.reduce((s,x)=>s+(x.cost||0)*x.qty,0);
+  const tp=allSales.reduce((s,x)=>s+x.profit,0);
   const te=EXP.reduce((s,e)=>s+e.amount,0);
   document.getElementById('rr').textContent=fmt(tr);
   document.getElementById('rc').textContent=fmt(tc);

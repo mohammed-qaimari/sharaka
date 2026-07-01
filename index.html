@@ -156,6 +156,8 @@ tr:hover td{background:#fafafa;}
     <button class="tb on" onclick="go('inv')">📦 المخزون</button>
     <button class="tb" onclick="go('sale')">🧾 فاتورة بيع</button>
     <button class="tb" onclick="go('hist')">📋 سجل المبيعات</button>
+    <button class="tb" onclick="go('purch')">🛒 المشتريات</button>
+    <button class="tb" onclick="go('pending')">🚚 قيد التوصيل</button>
     <button class="tb" onclick="go('exp')">💸 المصاريف</button>
     <button class="tb" onclick="go('charts')">📊 إحصائيات</button>
     <button class="tb" onclick="go('rep')">💰 التقرير</button>
@@ -255,6 +257,13 @@ tr:hover td{background:#fafafa;}
         <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--tm);padding:4px 14px;">
           <span>نصيب محمد</span><span id="iv-share-preview">₪0.00</span>
         </div>
+        <div class="adjrow" style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--bd);">
+          <label>حالة الدفع:</label>
+          <select id="payment-status" style="flex:1;padding:8px 10px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:13px;background:var(--bg);">
+            <option value="received">✅ تم استلام المبلغ</option>
+            <option value="delivery">🚚 خارج للتوصيل — لم يُستلم بعد</option>
+          </select>
+        </div>
         <div style="margin-top:11px;display:flex;gap:8px;">
           <button class="ba" id="btn-submit-iv" onclick="submitIv()" style="flex:1;">✓ تسجيل الفاتورة</button>
           <button class="bs" onclick="clearIv()">مسح</button>
@@ -292,8 +301,8 @@ tr:hover td{background:#fafafa;}
       </div>
       <div class="tw">
         <table>
-          <thead><tr><th>التاريخ</th><th>الأصناف</th><th>الإجمالي</th><th>تعديل</th><th>الربح</th><th>البائع</th><th>فاتورة</th><th></th></tr></thead>
-          <tbody id="stb"><tr class="er"><td colspan="8">لا توجد مبيعات</td></tr></tbody>
+          <thead><tr><th>التاريخ</th><th>الأصناف</th><th>الإجمالي</th><th>تعديل</th><th>الربح</th><th>الدفع</th><th>البائع</th><th>فاتورة</th><th></th></tr></thead>
+          <tbody id="stb"><tr class="er"><td colspan="9">لا توجد مبيعات</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -306,6 +315,76 @@ tr:hover td{background:#fafafa;}
           <button onclick="closeModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;">×</button>
         </div>
         <div id="iv-modal-body"></div>
+      </div>
+    </div>
+
+    <!-- PURCHASES -->
+    <div id="pan-purch" class="pan">
+      <div class="fb">
+        <div class="fbt">تسجيل مشتريات</div>
+        <div class="fr">
+          <div class="f"><label>اسم الصنف</label><input id="pu-name" type="text" placeholder="مثال: علب مخللات"/></div>
+          <div class="f" style="max-width:80px"><label>الكمية</label><input id="pu-qty" type="number" min="1" value="1" inputmode="numeric"/></div>
+          <div class="f" style="max-width:110px"><label>سعر الوحدة ₪</label><input id="pu-cost" type="number" min="0" step="any" placeholder="0" inputmode="decimal" oninput="calcPuTotal()"/></div>
+          <div class="f" style="max-width:110px"><label>الإجمالي ₪</label><div id="pu-total-preview" style="padding:8px 9px;background:var(--gl);border-radius:6px;font-weight:600;color:var(--gd);font-size:14px;">₪0.00</div></div>
+          <div class="f" style="max-width:140px"><label>طريقة الدفع</label>
+            <select id="pu-method">
+              <option value="نقداً">💵 نقداً</option>
+              <option value="خصم من الراتب">💳 خصم من الراتب</option>
+            </select>
+          </div>
+          <div class="f" style="max-width:160px"><label>ربط بالمخزون (اختياري)</label>
+            <select id="pu-inv-link">
+              <option value="">— بدون ربط —</option>
+            </select>
+          </div>
+          <button class="ba" onclick="addPurchase()">+ تسجيل</button>
+        </div>
+      </div>
+      <div class="mg">
+        <div class="mk"><div class="ml">إجمالي المشتريات</div><div class="mv a" id="pu-total">₪0.00</div></div>
+        <div class="mk"><div class="ml">نقداً</div><div class="mv r" id="pu-cash">₪0.00</div></div>
+        <div class="mk"><div class="ml">خصم من الراتب</div><div class="mv b" id="pu-salary">₪0.00</div></div>
+      </div>
+      <div class="fbar">
+        <label>تصفية الشهر:</label>
+        <select id="pu-fil-month" onchange="renderPurch()">
+          <option value="2026-01">يناير 2026</option>
+          <option value="2026-02">فبراير 2026</option>
+          <option value="2026-03">مارس 2026</option>
+          <option value="2026-04">أبريل 2026</option>
+          <option value="2026-05">مايو 2026</option>
+          <option value="2026-06">يونيو 2026</option>
+          <option value="2026-07">يوليو 2026</option>
+          <option value="2026-08">أغسطس 2026</option>
+          <option value="2026-09">سبتمبر 2026</option>
+          <option value="2026-10">أكتوبر 2026</option>
+          <option value="2026-11">نوفمبر 2026</option>
+          <option value="2026-12">ديسمبر 2026</option>
+        </select>
+        <button class="bx" onclick="resetPurchMonth()">تصفير هذا الشهر</button>
+        <button class="be" onclick="expPurch()">⬇ Excel المشتريات</button>
+      </div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>التاريخ</th><th>الصنف</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th><th>طريقة الدفع</th><th>مرتبط بالمخزون</th><th>سجّله</th><th></th></tr></thead>
+          <tbody id="putb"><tr class="er"><td colspan="9">لا توجد مشتريات بعد</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PENDING DELIVERY -->
+    <div id="pan-pending" class="pan">
+      <div class="mg">
+        <div class="mk"><div class="ml">قيد التوصيل</div><div class="mv a" id="pd-count">0</div></div>
+        <div class="mk"><div class="ml">إجمالي المعلّق</div><div class="mv a" id="pd-total">₪0.00</div></div>
+        <div class="mk"><div class="ml">ربح متوقع</div><div class="mv g" id="pd-profit">₪0.00</div></div>
+      </div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>التاريخ</th><th>الأصناف</th><th>الإجمالي</th><th>الربح المتوقع</th><th>البائع</th><th>الحالة</th><th></th></tr></thead>
+          <tbody id="pdtb"><tr class="er"><td colspan="7">لا توجد طلبيات قيد التوصيل</td></tr></tbody>
+        </table>
       </div>
     </div>
 
@@ -394,7 +473,7 @@ const SB_URL='https://djkfccwfpcmzkcnbysck.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqa2ZjY3dmcGNtemtjbmJ5c2NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODY2NTUsImV4cCI6MjA5MjM2MjY1NX0.kgRX4LLmbnBEzX9qJOl9IbBpVagftN1Sm3sr6wpPW4M';
 const sb=supabase.createClient(SB_URL,SB_KEY);
 
-let CU=null,UN='',INV=[],SAL=[],EXP=[],LINES=[];
+let CU=null,UN='',INV=[],SAL=[],EXP=[],PURCH=[],LINES=[];
 let CH={};
 
 const fmt=n=>'₪'+parseFloat(n||0).toFixed(2);
@@ -445,21 +524,27 @@ async function boot(u){
   document.getElementById('auth').style.display='none';
   document.getElementById('app').style.display='flex';
   document.getElementById('edt').value=today();
-  // set current month filter
   document.getElementById('fil-month').value=curMonth();
+  document.getElementById('pu-fil-month').value=curMonth();
   await load();
-  sb.channel('rt').on('postgres_changes',{event:'*',schema:'public',table:'inventory'},load).on('postgres_changes',{event:'*',schema:'public',table:'sales'},load).on('postgres_changes',{event:'*',schema:'public',table:'expenses'},load).subscribe();
+  sb.channel('rt')
+    .on('postgres_changes',{event:'*',schema:'public',table:'inventory'},load)
+    .on('postgres_changes',{event:'*',schema:'public',table:'sales'},load)
+    .on('postgres_changes',{event:'*',schema:'public',table:'expenses'},load)
+    .on('postgres_changes',{event:'*',schema:'public',table:'purchases'},load)
+    .subscribe();
   initIv();
 }
 
 async function load(){
   try{
-    const[a,b,c]=await Promise.all([
+    const[a,b,c,d]=await Promise.all([
       sb.from('inventory').select('*').order('created_at'),
       sb.from('sales').select('*').order('created_at',{ascending:false}),
-      sb.from('expenses').select('*').order('expense_date',{ascending:false})
+      sb.from('expenses').select('*').order('expense_date',{ascending:false}),
+      sb.from('purchases').select('*').order('created_at',{ascending:false})
     ]);
-    INV=a.data||[];SAL=b.data||[];EXP=c.data||[];
+    INV=a.data||[];SAL=b.data||[];EXP=c.data||[];PURCH=d.data||[];
     renderAll();
   }catch(e){console.error(e);}
 }
@@ -727,7 +812,8 @@ async function submitIv(){
     else if(pradjt==='sub') profit=profit-pradjv;
     const nm=vl.map(l=>{const it=INV.find(i=>String(i.id)===String(l.itemId));return`${it?.name||'?'} ×${l.qty} بـ${fmt(l.price)}`;}).join('، ');
     const tq=vl.reduce((s,l)=>s+l.qty,0);
-    const saleData={item_name:nm,qty:tq,price:parseFloat((tot/Math.max(1,tq)).toFixed(2)),total:parseFloat(tot.toFixed(2)),profit:parseFloat(profit.toFixed(2)),cost:parseFloat((tc/Math.max(1,tq)).toFixed(2)),sold_by:UN,sale_date:today(),adj_amount:parseFloat(adj.toFixed(2)),profit_adj:parseFloat((pradjt==='add'?pradjv:pradjt==='sub'?-pradjv:0).toFixed(2)),items_json:JSON.stringify(vl.map(l=>({itemId:l.itemId,itemName:INV.find(i=>String(i.id)===String(l.itemId))?.name||'',qty:l.qty,price:l.price})))};
+    const paymentStatus=document.getElementById('payment-status').value;
+    const saleData={item_name:nm,qty:tq,price:parseFloat((tot/Math.max(1,tq)).toFixed(2)),total:parseFloat(tot.toFixed(2)),profit:parseFloat((paymentStatus==='received'?profit:0).toFixed(2)),cost:parseFloat((tc/Math.max(1,tq)).toFixed(2)),sold_by:UN,sale_date:today(),adj_amount:parseFloat(adj.toFixed(2)),profit_adj:parseFloat((pradjt==='add'?pradjv:pradjt==='sub'?-pradjv:0).toFixed(2)),payment_status:paymentStatus,items_json:JSON.stringify(vl.map(l=>({itemId:l.itemId,itemName:INV.find(i=>String(i.id)===String(l.itemId))?.name||'',qty:l.qty,price:l.price})))};
     const{error:se}=await sb.from('sales').insert(saleData);
     if(se){alert('خطأ في حفظ الفاتورة: '+se.message);return;}
     await Promise.all(vl.map(l=>{const it=INV.find(i=>String(i.id)===String(l.itemId));return sb.from('inventory').update({qty:it.qty-l.qty}).eq('id',it.id);}));
@@ -738,6 +824,7 @@ async function submitIv(){
 
 function clearIv(){
   LINES=[];addLine();
+  document.getElementById('payment-status').value='received';
   document.getElementById('adjt').value='';
   document.getElementById('adjv').value='';
   document.getElementById('adjp').textContent='';
@@ -761,7 +848,8 @@ function renderHist(){
       const adj=s.adj_amount&&s.adj_amount!==0?`<span style="color:${s.adj_amount<0?'var(--r)':'var(--g)'};">${s.adj_amount>0?'+':''}${fmt(s.adj_amount)}</span>`:'—';
       const clearedBadge=s.is_cleared?'<span style="background:#fee2e2;color:#b91c1c;font-size:10px;padding:2px 6px;border-radius:10px;margin-right:4px;">مُصفَّر</span>':'';
       const rowStyle=s.is_cleared?'opacity:0.5;':'';
-      return`<tr style="${rowStyle}"><td style="color:var(--tm);font-size:12px">${s.sale_date} ${t}${clearedBadge}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.item_name}">${s.item_name}</td><td>${fmt(s.total)}</td><td>${adj}</td><td style="color:var(--g);font-weight:600">${fmt(s.profit)}</td><td><span class="wtag">${s.sold_by||'—'}</span></td><td><button onclick="showInvoice('${s.id}')" style="background:none;border:1px solid var(--bd);border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--b);">عرض</button></td><td><button class="del" onclick="delSal('${s.id}')">×</button></td></tr>`;
+      const payBadge=s.payment_status==='delivery'?'<span style="background:#FEF9C3;color:#854D0E;font-size:10px;padding:2px 6px;border-radius:10px;">🚚 توصيل</span>':'<span style="background:#DCFCE7;color:#166534;font-size:10px;padding:2px 6px;border-radius:10px;">✅ مستلم</span>';
+      return`<tr style="${rowStyle}"><td style="color:var(--tm);font-size:12px">${s.sale_date} ${t}${clearedBadge}</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.item_name}">${s.item_name}</td><td>${fmt(s.total)}</td><td>${adj}</td><td style="color:var(--g);font-weight:600">${fmt(s.profit)}</td><td>${payBadge}</td><td><span class="wtag">${s.sold_by||'—'}</span></td><td><button onclick="showInvoice('${s.id}')" style="background:none;border:1px solid var(--bd);border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--b);">عرض</button></td><td><button class="del" onclick="delSal('${s.id}')">×</button></td></tr>`;
     }).join('');
   }
   // الإحصائيات تستثني المُصفَّرة
@@ -926,19 +1014,127 @@ function expFull(){
   ]);
 }
 
-function renderAll(){rInv();renderHist();rExp();rRep();if(document.getElementById('pan-charts').classList.contains('on'))rCharts();rLines();}
+// ── PURCHASES ──
+function calcPuTotal(){
+  const q=parseFloat(document.getElementById('pu-qty').value)||0;
+  const c=parseFloat(document.getElementById('pu-cost').value)||0;
+  document.getElementById('pu-total-preview').textContent=fmt(q*c);
+}
+
+function updatePuInvSelect(){
+  const sel=document.getElementById('pu-inv-link');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— بدون ربط —</option>'+INV.map(i=>`<option value="${i.id}">${i.name}</option>`).join('');
+  if(cur)sel.value=cur;
+}
+
+async function addPurchase(){
+  const name=document.getElementById('pu-name').value.trim();
+  const qty=parseFloat(document.getElementById('pu-qty').value)||0;
+  const cost=parseFloat(document.getElementById('pu-cost').value)||0;
+  const method=document.getElementById('pu-method').value;
+  const invLink=document.getElementById('pu-inv-link').value;
+  if(!name||!qty||!cost){alert('أدخل اسم الصنف والكمية والسعر');return;}
+  const total=parseFloat((qty*cost).toFixed(2));
+  const pData={item_name:name,qty,unit_cost:cost,total,payment_method:method,linked_to_inventory:!!invLink,inventory_item_id:invLink||null,purchase_date:today(),added_by:UN};
+  const{error}=await sb.from('purchases').insert(pData);
+  if(error){alert('خطأ في الحفظ: '+error.message);return;}
+  // ربط بالمخزون إذا تم الاختيار
+  if(invLink){
+    const item=INV.find(i=>String(i.id)===invLink);
+    if(item) await sb.from('inventory').update({qty:item.qty+qty}).eq('id',item.id);
+  }
+  document.getElementById('pu-name').value='';
+  document.getElementById('pu-qty').value='1';
+  document.getElementById('pu-cost').value='';
+  document.getElementById('pu-total-preview').textContent='₪0.00';
+  document.getElementById('pu-inv-link').value='';
+  await load();
+}
+
+async function delPurchase(id){
+  if(!confirm('حذف هذا الشراء؟'))return;
+  await sb.from('purchases').delete().eq('id',id);
+  await load();
+}
+
+async function resetPurchMonth(){
+  const m=document.getElementById('pu-fil-month').value;
+  const mn=document.querySelector('#pu-fil-month option:checked').textContent;
+  if(!confirm(`تصفير مشتريات ${mn}؟ ستبقى السجلات موجودة.`))return;
+  const ids=PURCH.filter(p=>p.purchase_date?.startsWith(m)&&!p.is_cleared).map(p=>p.id);
+  if(!ids.length){alert('لا توجد مشتريات نشطة في هذا الشهر');return;}
+  await sb.from('purchases').update({is_cleared:true}).in('id',ids);
+  await load();
+}
+
+function renderPurch(){
+  const m=document.getElementById('pu-fil-month').value;
+  const filtered=PURCH.filter(p=>p.purchase_date?.startsWith(m));
+  const tb=document.getElementById('putb');
+  if(!filtered.length){tb.innerHTML='<tr class="er"><td colspan="9">لا توجد مشتريات في هذا الشهر</td></tr>';}
+  else{
+    tb.innerHTML=filtered.map(p=>{
+      const cleared=p.is_cleared?'<span style="background:#fee2e2;color:#b91c1c;font-size:10px;padding:2px 6px;border-radius:10px;margin-right:4px;">مُصفَّر</span>':'';
+      const rowStyle=p.is_cleared?'opacity:0.5;':'';
+      const invName=p.linked_to_inventory&&p.inventory_item_id?INV.find(i=>String(i.id)===String(p.inventory_item_id))?.name||'✓':'—';
+      const methodBadge=p.payment_method==='نقداً'?`<span class="badge" style="background:#FEF9C3;color:#854D0E;">💵 نقداً</span>`:`<span class="badge" style="background:var(--bl);color:var(--b);">💳 خصم راتب</span>`;
+      return`<tr style="${rowStyle}"><td style="font-size:12px;color:var(--tm)">${p.purchase_date}${cleared}</td><td style="font-weight:600">${p.item_name}</td><td>${p.qty}</td><td>${fmt(p.unit_cost)}</td><td style="font-weight:600;color:var(--a)">${fmt(p.total)}</td><td>${methodBadge}</td><td style="font-size:12px">${invName}</td><td><span class="wtag">${p.added_by||'—'}</span></td><td><button class="del" onclick="delPurchase('${p.id}')">×</button></td></tr>`;
+    }).join('');
+  }
+  const active=filtered.filter(p=>!p.is_cleared);
+  const total=active.reduce((s,p)=>s+p.total,0);
+  const cash=active.filter(p=>p.payment_method==='نقداً').reduce((s,p)=>s+p.total,0);
+  const salary=active.filter(p=>p.payment_method==='خصم من الراتب').reduce((s,p)=>s+p.total,0);
+  document.getElementById('pu-total').textContent=fmt(total);
+  document.getElementById('pu-cash').textContent=fmt(cash);
+  document.getElementById('pu-salary').textContent=fmt(salary);
+}
+
+// ── PENDING DELIVERY ──
+function renderPending(){
+  const pending=SAL.filter(s=>s.payment_status==='delivery');
+  const tb=document.getElementById('pdtb');
+  if(!pending.length){tb.innerHTML='<tr class="er"><td colspan="7">لا توجد طلبيات قيد التوصيل</td></tr>';}
+  else{
+    tb.innerHTML=pending.map(s=>{
+      const t=new Date(s.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+      return`<tr style="background:#FFFBEB"><td style="font-size:12px;color:var(--tm)">${s.sale_date} ${t}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.item_name}</td><td>${fmt(s.total)}</td><td style="color:var(--g)">${fmt(s.profit_expected||s.total)}</td><td><span class="wtag">${s.sold_by||'—'}</span></td><td><span style="background:#FEF9C3;color:#854D0E;padding:3px 8px;border-radius:10px;font-size:11px;">🚚 قيد التوصيل</span></td><td><button onclick="confirmDelivery('${s.id}')" style="background:#1D9E75;color:white;border:none;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;">✓ تم الاستلام</button></td></tr>`;
+    }).join('');
+  }
+  document.getElementById('pd-count').textContent=pending.length;
+  document.getElementById('pd-total').textContent=fmt(pending.reduce((s,x)=>s+x.total,0));
+  document.getElementById('pd-profit').textContent=fmt(pending.reduce((s,x)=>s+(x.profit_expected||x.total),0));
+}
+
+async function confirmDelivery(id){
+  if(!confirm('تأكيد استلام المبلغ وإغلاق هذه الفاتورة؟'))return;
+  const s=SAL.find(x=>String(x.id)===String(id));
+  if(!s)return;
+  // احسب الربح الحقيقي عند الاستلام
+  const tc=s.cost*s.qty;
+  const realProfit=parseFloat((s.total-tc).toFixed(2));
+  await sb.from('sales').update({payment_status:'received',profit:realProfit}).eq('id',id);
+  await load();
+  alert('تم تأكيد الاستلام وإغلاق الفاتورة ✅');
+}
+
+
+
+function renderAll(){rInv();renderHist();rExp();rRep();renderPurch();renderPending();if(document.getElementById('pan-charts').classList.contains('on'))rCharts();rLines();updatePuInvSelect();}
 
 function go(n){
-  const tabs=['inv','sale','hist','exp','charts','rep'];
+  const tabs=['inv','sale','hist','purch','pending','exp','charts','rep'];
   document.querySelectorAll('.tb').forEach((b,i)=>b.classList.toggle('on',tabs[i]===n));
   document.querySelectorAll('.pan').forEach(p=>p.classList.remove('on'));
   document.getElementById('pan-'+n).classList.add('on');
   if(n==='charts')rCharts();
   if(n==='hist')renderHist();
+  if(n==='purch'){renderPurch();updatePuInvSelect();}
+  if(n==='pending')renderPending();
 }
 
 sb.auth.getSession().then(({data})=>{if(data.session)boot(data.session.user);});
 </script>
 </body>
 </html>
-

@@ -154,13 +154,13 @@ tr:hover td{background:#fafafa;}
   </div>
   <div class="tbr">
     <button class="tb on" onclick="go('inv')">📦 المخزون</button>
-    <button class="tb" onclick="go('sale')">🧾 فاتورة بيع</button>
-    <button class="tb" onclick="go('hist')">📋 سجل المبيعات</button>
     <button class="tb" onclick="go('purch')">🛒 المشتريات</button>
+    <button class="tb" onclick="go('sale')">🧾 فاتورة بيع</button>
     <button class="tb" onclick="go('pending')">🚚 قيد التوصيل</button>
+    <button class="tb" onclick="go('hist')">📋 سجل المبيعات</button>
     <button class="tb" onclick="go('exp')">💸 المصاريف</button>
     <button class="tb" onclick="go('charts')">📊 إحصائيات</button>
-    <button class="tb" onclick="go('rep')">💰 التقرير</button>
+    <button class="tb" onclick="go('rep')">💰 التقارير</button>
   </div>
   <div class="mc">
 
@@ -273,13 +273,6 @@ tr:hover td{background:#fafafa;}
 
     <!-- HISTORY -->
     <div id="pan-hist" class="pan">
-      <div class="mg">
-        <div class="mk"><div class="ml">عمليات الشهر</div><div class="mv" id="mto">0</div></div>
-        <div class="mk"><div class="ml">إيراد الشهر</div><div class="mv g" id="mtr">₪0.00</div></div>
-        <div class="mk"><div class="ml">ربح الشهر</div><div class="mv g" id="mtp">₪0.00</div></div>
-        <div class="mk"><div class="ml">نصيب محمد</div><div class="mv b" id="mts">₪0.00</div></div>
-        <div class="mk"><div class="ml">نصيب محمود</div><div class="mv b" id="mtm">₪0.00</div></div>
-      </div>
       <div class="fbar">
         <label>تصفية الشهر:</label>
         <select id="fil-month" onchange="renderHist()">
@@ -301,8 +294,8 @@ tr:hover td{background:#fafafa;}
       </div>
       <div class="tw">
         <table>
-          <thead><tr><th>التاريخ</th><th>الأصناف</th><th>الإجمالي</th><th>تعديل</th><th>الربح</th><th>الدفع</th><th>البائع</th><th>فاتورة</th><th></th></tr></thead>
-          <tbody id="stb"><tr class="er"><td colspan="9">لا توجد مبيعات</td></tr></tbody>
+          <thead><tr><th>التاريخ</th><th>الأصناف</th><th>الإجمالي</th><th>تعديل</th><th>الربح</th><th>الدفع</th><th>البائع</th><th>فاتورة</th><th>تعديل</th><th></th></tr></thead>
+          <tbody id="stb"><tr class="er"><td colspan="10">لا توجد مبيعات</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -315,6 +308,78 @@ tr:hover td{background:#fafafa;}
           <button onclick="closeModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;">×</button>
         </div>
         <div id="iv-modal-body"></div>
+      </div>
+    </div>
+
+    <!-- EDIT PENDING MODAL -->
+    <div id="edit-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:440px;direction:rtl;max-height:85vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h2 style="font-size:16px;font-weight:600;">✏️ تعديل الفاتورة</h2>
+          <button onclick="closeEditModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;">×</button>
+        </div>
+        <input type="hidden" id="edit-sale-id"/>
+        <div class="fg" style="margin-bottom:12px">
+          <label style="font-size:11px;font-weight:500;color:var(--tm);display:block;margin-bottom:5px">الإجمالي الجديد ₪</label>
+          <input id="edit-total" type="number" min="0" step="any" inputmode="decimal" style="width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:14px;"/>
+        </div>
+        <div class="fg" style="margin-bottom:12px">
+          <label style="font-size:11px;font-weight:500;color:var(--tm);display:block;margin-bottom:5px">الربح الجديد ₪ (اتركه فارغاً لحسابه تلقائياً)</label>
+          <input id="edit-profit" type="number" step="any" inputmode="decimal" placeholder="سيُحسب تلقائياً" style="width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:14px;"/>
+        </div>
+        <div class="fg" style="margin-bottom:12px">
+          <label style="font-size:11px;font-weight:500;color:var(--tm);display:block;margin-bottom:5px">حالة الدفع</label>
+          <select id="edit-payment-status" style="width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:13px;">
+            <option value="received">✅ تم استلام المبلغ</option>
+            <option value="delivery">🚚 خارج للتوصيل</option>
+          </select>
+        </div>
+        <div class="fg" style="margin-bottom:16px">
+          <label style="font-size:11px;font-weight:500;color:var(--tm);display:block;margin-bottom:5px">ملاحظة (اختياري)</label>
+          <input id="edit-note" type="text" placeholder="سبب التعديل..." style="width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:13px;"/>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="saveEditSale()" style="flex:1;padding:10px;background:var(--g);color:white;border:none;border-radius:6px;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;">حفظ التعديل</button>
+          <button onclick="closeEditModal()" style="padding:10px 16px;background:none;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:13px;cursor:pointer;">إلغاء</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PURCHASE EDIT MODAL -->
+    <div id="pu-edit-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:400px;direction:rtl;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h2 style="font-size:16px;font-weight:600;">✏️ تعديل المشتريات</h2>
+          <button onclick="closePuEditModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;">×</button>
+        </div>
+        <input type="hidden" id="pu-edit-id"/>
+        <div class="fg" style="margin-bottom:12px">
+          <label style="font-size:11px;font-weight:500;color:var(--tm);display:block;margin-bottom:5px">اسم الصنف</label>
+          <input id="pu-edit-name" type="text" style="width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:14px;"/>
+        </div>
+        <div class="fg" style="margin-bottom:12px">
+          <label style="font-size:11px;font-weight:500;color:var(--tm);display:block;margin-bottom:5px">الكمية</label>
+          <input id="pu-edit-qty" type="number" min="1" inputmode="numeric" style="width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:14px;"/>
+        </div>
+        <div class="fg" style="margin-bottom:12px">
+          <label style="font-size:11px;font-weight:500;color:var(--tm);display:block;margin-bottom:5px">سعر الوحدة ₪</label>
+          <input id="pu-edit-cost" type="number" min="0" step="any" inputmode="decimal" style="width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:14px;"/>
+        </div>
+        <div class="fg" style="margin-bottom:12px">
+          <label style="font-size:11px;font-weight:500;color:var(--tm);display:block;margin-bottom:5px">الإجمالي الجديد ₪ (اختياري — يُحسب تلقائياً)</label>
+          <input id="pu-edit-total" type="number" min="0" step="any" inputmode="decimal" placeholder="سيُحسب تلقائياً" style="width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:14px;"/>
+        </div>
+        <div class="fg" style="margin-bottom:16px">
+          <label style="font-size:11px;font-weight:500;color:var(--tm);display:block;margin-bottom:5px">طريقة الدفع</label>
+          <select id="pu-edit-method" style="width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:13px;">
+            <option value="نقداً">💵 نقداً</option>
+            <option value="خصم من الراتب">💳 خصم من الراتب</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="savePuEdit()" style="flex:1;padding:10px;background:var(--g);color:white;border:none;border-radius:6px;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;">حفظ</button>
+          <button onclick="closePuEditModal()" style="padding:10px 16px;background:none;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:13px;cursor:pointer;">إلغاء</button>
+        </div>
       </div>
     </div>
 
@@ -399,7 +464,7 @@ tr:hover td{background:#fafafa;}
           <div class="f" style="max-width:130px"><label>الفئة</label>
             <select id="ec">
               <option>إيجار</option><option>نقل وشحن</option><option>كهرباء وماء</option>
-              <option>رواتب</option><option>تسويق</option><option>صيانة</option><option>أخرى</option>
+              <option>رواتب</option><option>تسويق</option><option>صيانة</option><option>تغليف</option><option>أخرى</option>
             </select>
           </div>
           <button class="ba" onclick="addExp()">+ تسجيل</button>
@@ -459,7 +524,7 @@ tr:hover td{background:#fafafa;}
       </div>
       <div class="tw">
         <table>
-          <thead><tr><th>الصنف</th><th>الكمية</th><th>الإيراد</th><th>التكلفة</th><th>الربح</th><th>نصيب محمد</th><th>نصيب محمود</th></tr></thead>
+          <thead><tr><th>التاريخ</th><th>الأصناف</th><th>الإجمالي</th><th>الربح</th><th>نصيب محمد</th><th>نصيب محمود</th><th>فاتورة</th></tr></thead>
           <tbody id="rtb"><tr class="er"><td colspan="7">لا توجد مبيعات بعد</td></tr></tbody>
         </table>
       </div>
@@ -841,7 +906,7 @@ function renderHist(){
   const m=document.getElementById('fil-month').value;
   const filtered=SAL.filter(s=>s.sale_date?.startsWith(m));
   const tb=document.getElementById('stb');
-  if(!filtered.length){tb.innerHTML='<tr class="er"><td colspan="8">لا توجد مبيعات في هذا الشهر</td></tr>';}
+  if(!filtered.length){tb.innerHTML='<tr class="er"><td colspan="10">لا توجد مبيعات في هذا الشهر</td></tr>';}
   else{
     tb.innerHTML=filtered.map(s=>{
       const t=new Date(s.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
@@ -849,18 +914,9 @@ function renderHist(){
       const clearedBadge=s.is_cleared?'<span style="background:#fee2e2;color:#b91c1c;font-size:10px;padding:2px 6px;border-radius:10px;margin-right:4px;">مُصفَّر</span>':'';
       const rowStyle=s.is_cleared?'opacity:0.5;':'';
       const payBadge=s.payment_status==='delivery'?'<span style="background:#FEF9C3;color:#854D0E;font-size:10px;padding:2px 6px;border-radius:10px;">🚚 توصيل</span>':'<span style="background:#DCFCE7;color:#166534;font-size:10px;padding:2px 6px;border-radius:10px;">✅ مستلم</span>';
-      return`<tr style="${rowStyle}"><td style="color:var(--tm);font-size:12px">${s.sale_date} ${t}${clearedBadge}</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.item_name}">${s.item_name}</td><td>${fmt(s.total)}</td><td>${adj}</td><td style="color:var(--g);font-weight:600">${fmt(s.profit)}</td><td>${payBadge}</td><td><span class="wtag">${s.sold_by||'—'}</span></td><td><button onclick="showInvoice('${s.id}')" style="background:none;border:1px solid var(--bd);border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--b);">عرض</button></td><td><button class="del" onclick="delSal('${s.id}')">×</button></td></tr>`;
+      return`<tr style="${rowStyle}"><td style="color:var(--tm);font-size:12px">${s.sale_date} ${t}${clearedBadge}</td><td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.item_name}">${s.item_name}</td><td>${fmt(s.total)}</td><td>${adj}</td><td style="color:var(--g);font-weight:600">${fmt(s.profit)}</td><td>${payBadge}</td><td><span class="wtag">${s.sold_by||'—'}</span></td><td><button onclick="showInvoice('${s.id}')" style="background:none;border:1px solid var(--bd);border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--b);">عرض</button></td><td><button onclick="openEditSale('${s.id}')" style="background:none;border:1px solid #fbbf24;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:#92400e;">✏️</button></td><td><button class="del" onclick="delSal('${s.id}')">×</button></td></tr>`;
     }).join('');
   }
-  // الإحصائيات تستثني المُصفَّرة
-  const active=filtered.filter(s=>!s.is_cleared);
-  const rev=active.reduce((s,x)=>s+x.total,0);
-  const profit=active.reduce((s,x)=>s+x.profit,0);
-  document.getElementById('mto').textContent=active.length;
-  document.getElementById('mtr').textContent=fmt(rev);
-  document.getElementById('mtp').textContent=fmt(profit);
-  document.getElementById('mts').textContent=fmt(profit*0.5);
-  document.getElementById('mtm').textContent=fmt(profit*0.5);
 }
 
 async function delSal(id){
@@ -919,28 +975,30 @@ function rExp(){
 function rRep(){
   // كل الفواتير منذ البداية
   const allSales=SAL;
-  const activeSales=SAL.filter(s=>!s.is_cleared);
   // الشهر الحالي النشط
   const curM=curMonth();
-  const curActive=SAL.filter(s=>s.sale_date?.startsWith(curM)&&!s.is_cleared);
+  const curActive=SAL.filter(s=>s.sale_date?.startsWith(curM)&&!s.is_cleared&&s.payment_status!=='delivery');
   const mRev=curActive.reduce((s,x)=>s+x.total,0);
   const mProfit=curActive.reduce((s,x)=>s+x.profit,0);
   document.getElementById('rr-m').textContent=fmt(mRev);
   document.getElementById('rp-m').textContent=fmt(mProfit);
   document.getElementById('ry-m').textContent=fmt(mProfit*0.5);
   document.getElementById('rm-m').textContent=fmt(mProfit*0.5);
-  // إجمالي منذ البداية (كل الفواتير بدون استثناء)
-  const byi={};
-  allSales.forEach(s=>{
-    const k=s.item_name||'غير محدد';
-    if(!byi[k])byi[k]={qty:0,rev:0,cost:0,profit:0};
-    byi[k].qty+=s.qty;byi[k].rev+=s.total;byi[k].cost+=(s.cost||0)*s.qty;byi[k].profit+=s.profit;
-  });
-  const rows=Object.entries(byi),tb=document.getElementById('rtb');
-  tb.innerHTML=rows.length?rows.map(([n,d])=>`<tr><td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n}</td><td>${d.qty}</td><td style="color:var(--g)">${fmt(d.rev)}</td><td style="color:var(--a)">${fmt(d.cost)}</td><td style="color:var(--g);font-weight:600">${fmt(d.profit)}</td><td style="color:var(--b);font-weight:600">${fmt(d.profit*0.5)}</td><td style="color:var(--b);font-weight:600">${fmt(d.profit*0.5)}</td></tr>`).join(''):'<tr class="er"><td colspan="7">لا توجد مبيعات بعد</td></tr>';
-  const tr=allSales.reduce((s,x)=>s+x.total,0);
-  const tc=allSales.reduce((s,x)=>s+(x.cost||0)*x.qty,0);
-  const tp=allSales.reduce((s,x)=>s+x.profit,0);
+  // جدول الفواتير الفردية
+  const tb=document.getElementById('rtb');
+  const confirmed=allSales.filter(s=>s.payment_status!=='delivery');
+  tb.innerHTML=confirmed.length?confirmed.map(s=>`<tr>
+    <td style="font-size:12px;color:var(--tm)">${s.sale_date}</td>
+    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.item_name}">${s.item_name}</td>
+    <td style="color:var(--g)">${fmt(s.total)}</td>
+    <td style="color:var(--g);font-weight:600">${fmt(s.profit)}</td>
+    <td style="color:var(--b);font-weight:600">${fmt(s.profit*0.5)}</td>
+    <td style="color:var(--b);font-weight:600">${fmt(s.profit*0.5)}</td>
+    <td><button onclick="showInvoice('${s.id}')" style="background:none;border:1px solid var(--bd);border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--b);">عرض</button></td>
+  </tr>`).join(''):'<tr class="er"><td colspan="7">لا توجد مبيعات بعد</td></tr>';
+  const tr=confirmed.reduce((s,x)=>s+x.total,0);
+  const tc=confirmed.reduce((s,x)=>s+(x.cost||0)*x.qty,0);
+  const tp=confirmed.reduce((s,x)=>s+x.profit,0);
   const te=EXP.reduce((s,e)=>s+e.amount,0);
   document.getElementById('rr').textContent=fmt(tr);
   document.getElementById('rc').textContent=fmt(tc);
@@ -1014,7 +1072,67 @@ function expFull(){
   ]);
 }
 
-// ── PURCHASES ──
+// ── EDIT SALE ──
+function openEditSale(id){
+  const s=SAL.find(x=>String(x.id)===String(id));
+  if(!s)return;
+  document.getElementById('edit-sale-id').value=id;
+  document.getElementById('edit-total').value=s.total;
+  document.getElementById('edit-profit').value=s.profit;
+  document.getElementById('edit-payment-status').value=s.payment_status||'received';
+  document.getElementById('edit-note').value='';
+  document.getElementById('edit-modal').style.display='flex';
+}
+
+async function saveEditSale(){
+  const id=document.getElementById('edit-sale-id').value;
+  const newTotal=parseFloat(document.getElementById('edit-total').value)||0;
+  const newProfitInput=document.getElementById('edit-profit').value;
+  const paymentStatus=document.getElementById('edit-payment-status').value;
+  const s=SAL.find(x=>String(x.id)===String(id));
+  if(!s)return;
+  const tc=(s.cost||0)*s.qty;
+  const newProfit=newProfitInput!==''?parseFloat(newProfitInput):parseFloat((newTotal-tc).toFixed(2));
+  await sb.from('sales').update({total:newTotal,profit:newProfit,payment_status:paymentStatus}).eq('id',id);
+  closeEditModal();
+  await load();
+}
+
+function closeEditModal(){
+  document.getElementById('edit-modal').style.display='none';
+}
+
+// ── EDIT PURCHASE ──
+function openPuEdit(id){
+  const p=PURCH.find(x=>String(x.id)===String(id));
+  if(!p)return;
+  document.getElementById('pu-edit-id').value=id;
+  document.getElementById('pu-edit-name').value=p.item_name;
+  document.getElementById('pu-edit-qty').value=p.qty;
+  document.getElementById('pu-edit-cost').value=p.unit_cost;
+  document.getElementById('pu-edit-total').value=p.total;
+  document.getElementById('pu-edit-method').value=p.payment_method;
+  document.getElementById('pu-edit-modal').style.display='flex';
+}
+
+async function savePuEdit(){
+  const id=document.getElementById('pu-edit-id').value;
+  const name=document.getElementById('pu-edit-name').value.trim();
+  const qty=parseFloat(document.getElementById('pu-edit-qty').value)||0;
+  const cost=parseFloat(document.getElementById('pu-edit-cost').value)||0;
+  const totalInput=document.getElementById('pu-edit-total').value;
+  const total=totalInput!==''?parseFloat(totalInput):parseFloat((qty*cost).toFixed(2));
+  const method=document.getElementById('pu-edit-method').value;
+  await sb.from('purchases').update({item_name:name,qty,unit_cost:cost,total,payment_method:method}).eq('id',id);
+  closePuEditModal();
+  await load();
+}
+
+function closePuEditModal(){
+  document.getElementById('pu-edit-modal').style.display='none';
+}
+
+
 function calcPuTotal(){
   const q=parseFloat(document.getElementById('pu-qty').value)||0;
   const c=parseFloat(document.getElementById('pu-cost').value)||0;
@@ -1079,7 +1197,7 @@ function renderPurch(){
       const rowStyle=p.is_cleared?'opacity:0.5;':'';
       const invName=p.linked_to_inventory&&p.inventory_item_id?INV.find(i=>String(i.id)===String(p.inventory_item_id))?.name||'✓':'—';
       const methodBadge=p.payment_method==='نقداً'?`<span class="badge" style="background:#FEF9C3;color:#854D0E;">💵 نقداً</span>`:`<span class="badge" style="background:var(--bl);color:var(--b);">💳 خصم راتب</span>`;
-      return`<tr style="${rowStyle}"><td style="font-size:12px;color:var(--tm)">${p.purchase_date}${cleared}</td><td style="font-weight:600">${p.item_name}</td><td>${p.qty}</td><td>${fmt(p.unit_cost)}</td><td style="font-weight:600;color:var(--a)">${fmt(p.total)}</td><td>${methodBadge}</td><td style="font-size:12px">${invName}</td><td><span class="wtag">${p.added_by||'—'}</span></td><td><button class="del" onclick="delPurchase('${p.id}')">×</button></td></tr>`;
+      return`<tr style="${rowStyle}"><td style="font-size:12px;color:var(--tm)">${p.purchase_date}${cleared}</td><td style="font-weight:600">${p.item_name}</td><td>${p.qty}</td><td>${fmt(p.unit_cost)}</td><td style="font-weight:600;color:var(--a)">${fmt(p.total)}</td><td>${methodBadge}</td><td style="font-size:12px">${invName}</td><td><span class="wtag">${p.added_by||'—'}</span></td><td style="display:flex;gap:4px;"><button onclick="openPuEdit('${p.id}')" style="background:none;border:1px solid #fbbf24;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer;color:#92400e;">✏️</button><button class="del" onclick="delPurchase('${p.id}')">×</button></td></tr>`;
     }).join('');
   }
   const active=filtered.filter(p=>!p.is_cleared);
@@ -1099,7 +1217,7 @@ function renderPending(){
   else{
     tb.innerHTML=pending.map(s=>{
       const t=new Date(s.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
-      return`<tr style="background:#FFFBEB"><td style="font-size:12px;color:var(--tm)">${s.sale_date} ${t}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.item_name}</td><td>${fmt(s.total)}</td><td style="color:var(--g)">${fmt(s.profit_expected||s.total)}</td><td><span class="wtag">${s.sold_by||'—'}</span></td><td><span style="background:#FEF9C3;color:#854D0E;padding:3px 8px;border-radius:10px;font-size:11px;">🚚 قيد التوصيل</span></td><td><button onclick="confirmDelivery('${s.id}')" style="background:#1D9E75;color:white;border:none;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;">✓ تم الاستلام</button></td></tr>`;
+      return`<tr style="background:#FFFBEB"><td style="font-size:12px;color:var(--tm)">${s.sale_date} ${t}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.item_name}</td><td>${fmt(s.total)}</td><td style="color:var(--g)">${fmt(s.profit_expected||s.total)}</td><td><span class="wtag">${s.sold_by||'—'}</span></td><td><span style="background:#FEF9C3;color:#854D0E;padding:3px 8px;border-radius:10px;font-size:11px;">🚚 قيد التوصيل</span></td><td style="display:flex;gap:6px;padding:8px 0"><button onclick="confirmDelivery('${s.id}')" style="background:#1D9E75;color:white;border:none;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;">✓ تم الاستلام</button><button onclick="editPending('${s.id}')" style="background:none;border:1px solid var(--bd);border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--b);white-space:nowrap;">✏️ تعديل</button></td></tr>`;
     }).join('');
   }
   document.getElementById('pd-count').textContent=pending.length;
@@ -1121,10 +1239,21 @@ async function confirmDelivery(id){
 
 
 
+function editPending(id){
+  const s=SAL.find(x=>String(x.id)===String(id));
+  if(!s)return;
+  document.getElementById('edit-sale-id').value=id;
+  document.getElementById('edit-total').value=s.total;
+  document.getElementById('edit-pradjt').value='';
+  document.getElementById('edit-pradjv').value='';
+  document.getElementById('edit-note').value='';
+  document.getElementById('edit-modal').style.display='flex';
+}
+
 function renderAll(){rInv();renderHist();rExp();rRep();renderPurch();renderPending();if(document.getElementById('pan-charts').classList.contains('on'))rCharts();rLines();updatePuInvSelect();}
 
 function go(n){
-  const tabs=['inv','sale','hist','purch','pending','exp','charts','rep'];
+  const tabs=['inv','purch','sale','pending','hist','exp','charts','rep'];
   document.querySelectorAll('.tb').forEach((b,i)=>b.classList.toggle('on',tabs[i]===n));
   document.querySelectorAll('.pan').forEach(p=>p.classList.remove('on'));
   document.getElementById('pan-'+n).classList.add('on');

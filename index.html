@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>شراكة</title>
+<title>إدارة مخزن</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -119,8 +119,8 @@ tr:hover td{background:#fafafa;}
 <div id="auth">
   <div class="ac">
     <div class="al">
-      <div class="ico">🤝</div>
-      <h1>شراكة</h1>
+      <div class="ico">🏪</div>
+      <h1>إدارة مخزن</h1>
       <p>نظام إدارة المشروع المشترك</p>
     </div>
     <div class="atb">
@@ -145,7 +145,7 @@ tr:hover td{background:#fafafa;}
 <!-- APP -->
 <div id="app" style="display:none;flex-direction:column;min-height:100vh;">
   <div class="top">
-    <div class="brand"><div class="dot"></div>شراكة</div>
+    <div class="brand"><div class="dot"></div>إدارة مخزن</div>
     <div class="usr">
       <div class="ava" id="ava">؟</div>
       <span class="uname" id="uname">—</span>
@@ -345,7 +345,30 @@ tr:hover td{background:#fafafa;}
       </div>
     </div>
 
-    <!-- PURCHASE EDIT MODAL -->
+    <!-- INVENTORY QTY MODAL -->
+    <div id="inv-qty-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:360px;direction:rtl;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h2 style="font-size:16px;font-weight:600;">⚖️ تعديل كمية المخزون</h2>
+          <button onclick="document.getElementById('inv-qty-modal').style.display='none'" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;">×</button>
+        </div>
+        <div id="inv-qty-item-name" style="font-weight:600;font-size:15px;margin-bottom:4px;"></div>
+        <div id="inv-qty-current" style="font-size:12px;color:var(--tm);margin-bottom:16px;"></div>
+        <input type="hidden" id="inv-qty-id"/>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+          <button onclick="setInvQtyAction('add')" id="btn-qty-add" style="padding:10px;background:var(--gl);color:var(--gd);border:2px solid var(--g);border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">+ زيادة</button>
+          <button onclick="setInvQtyAction('sub')" id="btn-qty-sub" style="padding:10px;background:var(--rl);color:var(--r);border:2px solid transparent;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">- نقصان</button>
+          <button onclick="setInvQtyAction('set')" id="btn-qty-set" style="padding:10px;background:var(--bl);color:var(--b);border:2px solid transparent;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">= تعيين</button>
+          <button onclick="setInvQtyAction('zero')" id="btn-qty-zero" style="padding:10px;background:#f3f4f6;color:#6b7280;border:2px solid transparent;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">0 تصفير</button>
+        </div>
+        <input type="hidden" id="inv-qty-action" value="add"/>
+        <div id="inv-qty-input-row" style="margin-bottom:16px;">
+          <label style="font-size:11px;font-weight:500;color:var(--tm);display:block;margin-bottom:5px">الكمية</label>
+          <input id="inv-qty-val" type="number" min="0" inputmode="numeric" style="width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:14px;"/>
+        </div>
+        <button onclick="saveInvQty()" style="width:100%;padding:10px;background:var(--g);color:white;border:none;border-radius:6px;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;">حفظ</button>
+      </div>
+    </div>
     <div id="pu-edit-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
       <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:400px;direction:rtl;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
@@ -391,7 +414,8 @@ tr:hover td{background:#fafafa;}
           <div class="f"><label>اسم الصنف</label><input id="pu-name" type="text" placeholder="مثال: علب مخللات"/></div>
           <div class="f" style="max-width:80px"><label>الكمية</label><input id="pu-qty" type="number" min="1" value="1" inputmode="numeric"/></div>
           <div class="f" style="max-width:110px"><label>سعر الوحدة ₪</label><input id="pu-cost" type="number" min="0" step="any" placeholder="0" inputmode="decimal" oninput="calcPuTotal()"/></div>
-          <div class="f" style="max-width:110px"><label>الإجمالي ₪</label><div id="pu-total-preview" style="padding:8px 9px;background:var(--gl);border-radius:6px;font-weight:600;color:var(--gd);font-size:14px;">₪0.00</div></div>
+          <div class="f" style="max-width:110px"><label>الإجمالي ₪</label><input id="pu-total-override" type="number" min="0" step="any" placeholder="اتركه فارغاً" inputmode="decimal" oninput="calcPuTotal()"/></div>
+          <div class="f" style="max-width:100px"><label>المجموع</label><div id="pu-total-preview" style="padding:8px 9px;background:var(--gl);border-radius:6px;font-weight:600;color:var(--gd);font-size:14px;">₪0.00</div></div>
           <div class="f" style="max-width:140px"><label>طريقة الدفع</label>
             <select id="pu-method">
               <option value="نقداً">💵 نقداً</option>
@@ -761,7 +785,7 @@ function rInv(){
   else{tb.innerHTML=INV.map(i=>{
     const v=i.qty*i.cost;
     const b=i.qty>10?'<span class="badge bok">جيد</span>':i.qty>0?'<span class="badge blow">منخفض</span>':'<span class="badge bout">نفد</span>';
-    return`<tr><td style="font-weight:600">${i.name}</td><td>${i.qty}</td><td>${fmt(i.cost)}</td><td>${fmt(i.price)}</td><td>${fmt(v)}</td><td>${b}</td><td><span class="wtag">${i.added_by||'—'}</span></td><td><button class="del" onclick="delItem('${i.id}')">×</button></td></tr>`;
+    return`<tr><td style="font-weight:600">${i.name}</td><td>${i.qty}</td><td>${fmt(i.cost)}</td><td>${fmt(i.price)}</td><td>${fmt(v)}</td><td>${b}</td><td><span class="wtag">${i.added_by||'—'}</span></td><td style="display:flex;gap:4px;"><button onclick="openInvQtyModal('${i.id}')" style="background:none;border:1px solid #fbbf24;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer;color:#92400e;">⚖️</button><button class="del" onclick="delItem('${i.id}')">×</button></td></tr>`;
   }).join('');}
   document.getElementById('mti').textContent=INV.length;
   document.getElementById('miv').textContent=fmt(INV.reduce((s,i)=>s+i.qty*i.cost,0));
@@ -914,7 +938,8 @@ function renderHist(){
       const clearedBadge=s.is_cleared?'<span style="background:#fee2e2;color:#b91c1c;font-size:10px;padding:2px 6px;border-radius:10px;margin-right:4px;">مُصفَّر</span>':'';
       const rowStyle=s.is_cleared?'opacity:0.5;':'';
       const payBadge=s.payment_status==='delivery'?'<span style="background:#FEF9C3;color:#854D0E;font-size:10px;padding:2px 6px;border-radius:10px;">🚚 توصيل</span>':'<span style="background:#DCFCE7;color:#166534;font-size:10px;padding:2px 6px;border-radius:10px;">✅ مستلم</span>';
-      return`<tr style="${rowStyle}"><td style="color:var(--tm);font-size:12px">${s.sale_date} ${t}${clearedBadge}</td><td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.item_name}">${s.item_name}</td><td>${fmt(s.total)}</td><td>${adj}</td><td style="color:var(--g);font-weight:600">${fmt(s.profit)}</td><td>${payBadge}</td><td><span class="wtag">${s.sold_by||'—'}</span></td><td><button onclick="showInvoice('${s.id}')" style="background:none;border:1px solid var(--bd);border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--b);">عرض</button></td><td><button onclick="openEditSale('${s.id}')" style="background:none;border:1px solid #fbbf24;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:#92400e;">✏️</button></td><td><button class="del" onclick="delSal('${s.id}')">×</button></td></tr>`;
+      const profitDisplay=s.payment_status==='delivery'?`<span style="color:var(--a);font-weight:600">${fmt(s.total-(s.cost||0)*s.qty)} <span style="font-size:10px;color:var(--tm)">(متوقع)</span></span>`:`<span style="color:var(--g);font-weight:600">${fmt(s.profit)}</span>`;
+      return`<tr style="${rowStyle}"><td style="color:var(--tm);font-size:12px">${s.sale_date} ${t}${clearedBadge}</td><td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.item_name}">${s.item_name}</td><td>${fmt(s.total)}</td><td>${adj}</td><td>${profitDisplay}</td><td>${payBadge}</td><td><span class="wtag">${s.sold_by||'—'}</span></td><td><button onclick="showInvoice('${s.id}')" style="background:none;border:1px solid var(--bd);border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--b);">عرض</button></td><td><button onclick="openEditSale('${s.id}')" style="background:none;border:1px solid #fbbf24;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:#92400e;">✏️</button></td><td><button class="del" onclick="delSal('${s.id}')">×</button></td></tr>`;
     }).join('');
   }
 }
@@ -1037,7 +1062,7 @@ function mkChart(id,type,labels,data,datasets,colors){
 function xl(sheets){
   const wb=XLSX.utils.book_new();
   sheets.forEach(([rows,name])=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),name));
-  XLSX.writeFile(wb,'شراكة-'+today()+'.xlsx');
+  XLSX.writeFile(wb,'إدارة مخزن-'+today()+'.xlsx');
 }
 function expInv(){
   var rows=[['الصنف','الكمية','سعر الشراء','سعر البيع','قيمة المخزون','أضافه']];
@@ -1072,7 +1097,47 @@ function expFull(){
   ]);
 }
 
-// ── EDIT SALE ──
+// ── INVENTORY QTY ADJUST ──
+function openInvQtyModal(id){
+  const item=INV.find(i=>String(i.id)===String(id));
+  if(!item)return;
+  document.getElementById('inv-qty-id').value=id;
+  document.getElementById('inv-qty-item-name').textContent=item.name;
+  document.getElementById('inv-qty-current').textContent='الكمية الحالية: '+item.qty;
+  document.getElementById('inv-qty-val').value='';
+  document.getElementById('inv-qty-action').value='add';
+  setInvQtyAction('add');
+  document.getElementById('inv-qty-modal').style.display='flex';
+}
+
+function setInvQtyAction(action){
+  document.getElementById('inv-qty-action').value=action;
+  const btns={'add':'btn-qty-add','sub':'btn-qty-sub','set':'btn-qty-set','zero':'btn-qty-zero'};
+  const colors={'add':'var(--g)','sub':'var(--r)','set':'var(--b)','zero':'#6b7280'};
+  Object.keys(btns).forEach(k=>{
+    const btn=document.getElementById(btns[k]);
+    btn.style.borderColor=k===action?colors[k]:'transparent';
+  });
+  document.getElementById('inv-qty-input-row').style.display=action==='zero'?'none':'block';
+}
+
+async function saveInvQty(){
+  const id=document.getElementById('inv-qty-id').value;
+  const action=document.getElementById('inv-qty-action').value;
+  const val=parseFloat(document.getElementById('inv-qty-val').value)||0;
+  const item=INV.find(i=>String(i.id)===String(id));
+  if(!item)return;
+  let newQty=item.qty;
+  if(action==='add') newQty=item.qty+val;
+  else if(action==='sub') newQty=Math.max(0,item.qty-val);
+  else if(action==='set') newQty=val;
+  else if(action==='zero') newQty=0;
+  await sb.from('inventory').update({qty:Math.round(newQty)}).eq('id',id);
+  document.getElementById('inv-qty-modal').style.display='none';
+  await load();
+}
+
+
 function openEditSale(id){
   const s=SAL.find(x=>String(x.id)===String(id));
   if(!s)return;
@@ -1136,7 +1201,9 @@ function closePuEditModal(){
 function calcPuTotal(){
   const q=parseFloat(document.getElementById('pu-qty').value)||0;
   const c=parseFloat(document.getElementById('pu-cost').value)||0;
-  document.getElementById('pu-total-preview').textContent=fmt(q*c);
+  const override=document.getElementById('pu-total-override').value;
+  const total=override!==''?parseFloat(override):q*c;
+  document.getElementById('pu-total-preview').textContent=fmt(total);
 }
 
 function updatePuInvSelect(){
@@ -1153,7 +1220,8 @@ async function addPurchase(){
   const method=document.getElementById('pu-method').value;
   const invLink=document.getElementById('pu-inv-link').value;
   if(!name||!qty||!cost){alert('أدخل اسم الصنف والكمية والسعر');return;}
-  const total=parseFloat((qty*cost).toFixed(2));
+  const override=document.getElementById('pu-total-override').value;
+  const total=override!==''?parseFloat(override):parseFloat((qty*cost).toFixed(2));
   const pData={item_name:name,qty,unit_cost:cost,total,payment_method:method,linked_to_inventory:!!invLink,inventory_item_id:invLink||null,purchase_date:today(),added_by:UN};
   const{error}=await sb.from('purchases').insert(pData);
   if(error){alert('خطأ في الحفظ: '+error.message);return;}
@@ -1165,6 +1233,7 @@ async function addPurchase(){
   document.getElementById('pu-name').value='';
   document.getElementById('pu-qty').value='1';
   document.getElementById('pu-cost').value='';
+  document.getElementById('pu-total-override').value='';
   document.getElementById('pu-total-preview').textContent='₪0.00';
   document.getElementById('pu-inv-link').value='';
   await load();
@@ -1172,6 +1241,11 @@ async function addPurchase(){
 
 async function delPurchase(id){
   if(!confirm('حذف هذا الشراء؟'))return;
+  const p=PURCH.find(x=>String(x.id)===String(id));
+  if(p&&p.linked_to_inventory&&p.inventory_item_id){
+    const item=INV.find(i=>String(i.id)===String(p.inventory_item_id));
+    if(item) await sb.from('inventory').update({qty:Math.max(0,item.qty-p.qty)}).eq('id',item.id);
+  }
   await sb.from('purchases').delete().eq('id',id);
   await load();
 }
@@ -1217,7 +1291,7 @@ function renderPending(){
   else{
     tb.innerHTML=pending.map(s=>{
       const t=new Date(s.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
-      return`<tr style="background:#FFFBEB"><td style="font-size:12px;color:var(--tm)">${s.sale_date} ${t}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.item_name}</td><td>${fmt(s.total)}</td><td style="color:var(--g)">${fmt(s.profit_expected||s.total)}</td><td><span class="wtag">${s.sold_by||'—'}</span></td><td><span style="background:#FEF9C3;color:#854D0E;padding:3px 8px;border-radius:10px;font-size:11px;">🚚 قيد التوصيل</span></td><td style="display:flex;gap:6px;padding:8px 0"><button onclick="confirmDelivery('${s.id}')" style="background:#1D9E75;color:white;border:none;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;">✓ تم الاستلام</button><button onclick="editPending('${s.id}')" style="background:none;border:1px solid var(--bd);border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;color:var(--b);white-space:nowrap;">✏️ تعديل</button></td></tr>`;
+      return`<tr style="background:#FFFBEB"><td style="font-size:12px;color:var(--tm)">${s.sale_date} ${t}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.item_name}</td><td>${fmt(s.total)}</td><td style="color:var(--g);font-weight:600">${fmt(s.total-(s.cost||0)*s.qty)}</td><td><span class="wtag">${s.sold_by||'—'}</span></td><td><span style="background:#FEF9C3;color:#854D0E;padding:3px 8px;border-radius:10px;font-size:11px;">🚚 قيد التوصيل</span></td><td><button onclick="confirmDelivery('${s.id}')" style="background:#1D9E75;color:white;border:none;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;">✓ تم الاستلام</button></td></tr>`;
     }).join('');
   }
   document.getElementById('pd-count').textContent=pending.length;

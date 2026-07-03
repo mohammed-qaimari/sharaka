@@ -345,6 +345,22 @@ tr:hover td{background:#fafafa;}
       </div>
     </div>
 
+    <!-- NOTES MODAL -->
+    <div id="notes-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:380px;direction:rtl;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 style="font-size:16px;font-weight:600;">📝 ملاحظات الصنف</h2>
+          <button onclick="document.getElementById('notes-modal').style.display='none'" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;">×</button>
+        </div>
+        <div id="notes-item-name" style="font-weight:600;font-size:14px;color:var(--g);margin-bottom:12px;"></div>
+        <input type="hidden" id="notes-item-id"/>
+        <textarea id="notes-text" rows="5" placeholder="اكتب ملاحظاتك هنا..." style="width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;line-height:1.6;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button onclick="saveNotes()" style="flex:1;padding:10px;background:var(--g);color:white;border:none;border-radius:6px;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;">حفظ</button>
+          <button onclick="document.getElementById('notes-modal').style.display='none'" style="padding:10px 16px;background:none;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:13px;cursor:pointer;">إلغاء</button>
+        </div>
+      </div>
+    </div>
     <!-- INVENTORY QTY MODAL -->
     <div id="inv-qty-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
       <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:360px;direction:rtl;">
@@ -785,7 +801,7 @@ function rInv(){
   else{tb.innerHTML=INV.map(i=>{
     const v=i.qty*i.cost;
     const b=i.qty>10?'<span class="badge bok">جيد</span>':i.qty>0?'<span class="badge blow">منخفض</span>':'<span class="badge bout">نفد</span>';
-    return`<tr><td style="font-weight:600">${i.name}</td><td>${i.qty}</td><td>${fmt(i.cost)}</td><td>${fmt(i.price)}</td><td>${fmt(v)}</td><td>${b}</td><td><span class="wtag">${i.added_by||'—'}</span></td><td style="display:flex;gap:4px;"><button onclick="openInvQtyModal('${i.id}')" style="background:none;border:1px solid #fbbf24;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer;color:#92400e;">⚖️</button><button class="del" onclick="delItem('${i.id}')">×</button></td></tr>`;
+    return`<tr><td style="font-weight:600">${i.name}</td><td>${i.qty}</td><td>${fmt(i.cost)}</td><td>${fmt(i.price)}</td><td>${fmt(v)}</td><td>${b}</td><td><span class="wtag">${i.added_by||'—'}</span></td><td style="display:flex;gap:4px;"><button onclick="openInvQtyModal('${i.id}')" style="background:none;border:1px solid #fbbf24;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer;color:#92400e;">⚖️</button><button onclick="openNotesModal('${i.id}')" style="background:none;border:1px solid ${i.notes?'#1D9E75':'var(--bd)'};border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer;color:${i.notes?'#1D9E75':'var(--tm)'};" title="${i.notes||'إضافة ملاحظة'}">📝${i.notes?'✓':''}</button><button class="del" onclick="delItem('${i.id}')">×</button></td></tr>`;
   }).join('');}
   document.getElementById('mti').textContent=INV.length;
   document.getElementById('miv').textContent=fmt(INV.reduce((s,i)=>s+i.qty*i.cost,0));
@@ -1095,6 +1111,25 @@ function expFull(){
     [expRows,'المصاريف'],
     [[ ['البيان','المبلغ'],['اجمالي الايراد',tr],['صافي الربح',tp],['نصيب محمد 50%',tp*0.5],['نصيب محمود 50%',tp*0.5],['المصاريف للمعلومية',te] ],'الملخص المالي']
   ]);
+}
+
+// ── NOTES ──
+function openNotesModal(id){
+  const item=INV.find(i=>String(i.id)===String(id));
+  if(!item)return;
+  document.getElementById('notes-item-id').value=id;
+  document.getElementById('notes-item-name').textContent=item.name;
+  document.getElementById('notes-text').value=item.notes||'';
+  document.getElementById('notes-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('notes-text').focus(),100);
+}
+
+async function saveNotes(){
+  const id=document.getElementById('notes-item-id').value;
+  const notes=document.getElementById('notes-text').value.trim();
+  await sb.from('inventory').update({notes}).eq('id',id);
+  document.getElementById('notes-modal').style.display='none';
+  await load();
 }
 
 // ── INVENTORY QTY ADJUST ──

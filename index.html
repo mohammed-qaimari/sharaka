@@ -549,8 +549,8 @@ tr:hover td{background:#fafafa;}
         <div class="mk" style="border:1px solid #7c3aed20;background:#faf5ff;grid-column:span 2;"><div class="ml" style="color:#7c3aed;">﴿ مَّا عِندَكُمْ يَنفَدُ ۖ وَمَا عِندَ اللَّهِ بَاقٍ ۗ ﴾ (20%)</div><div class="mv" id="rg-m" style="color:#7c3aed;font-size:18px;">₪0.00</div></div>
       </div>
 
-      <!-- هذا الشهر - الإجمالي -->
-      <div style="font-size:12px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">🏦 إجمالي هذا الشهر (كل الفواتير)</div>
+      <!-- منذ البداية -->
+      <div style="font-size:12px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">🏦 إجمالي منذ البداية (كل الفواتير)</div>
       <div class="mg">
         <div class="mk"><div class="ml">إجمالي الإيراد</div><div class="mv g" id="rr">₪0.00</div></div>
         <div class="mk"><div class="ml">تكلفة المبيعات</div><div class="mv a" id="rc">₪0.00</div></div>
@@ -1028,10 +1028,10 @@ function rRep(){
   document.getElementById('ry-m').textContent=fmt(mProfit*0.4);
   document.getElementById('rm-m').textContent=fmt(mProfit*0.4);
   document.getElementById('rg-m').textContent=fmt(mProfit*0.2);
-  // جدول الفواتير — هذا الشهر فقط
-  const curMSales=SAL.filter(s=>s.payment_status!=='delivery'&&s.sale_date?.startsWith(curM));
+  // جدول الفواتير — كل الفواتير منذ البداية
+  const allConfirmed=allSales.filter(s=>s.payment_status!=='delivery');
   const tb=document.getElementById('rtb');
-  const confirmed=curMSales;
+  const confirmed=allConfirmed;
   tb.innerHTML=confirmed.length?confirmed.map(s=>`<tr>
     <td style="font-size:12px;color:var(--tm)">${s.sale_date}</td>
     <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.item_name}">${s.item_name}</td>
@@ -1044,7 +1044,7 @@ function rRep(){
   const tr=confirmed.reduce((s,x)=>s+x.total,0);
   const tc=confirmed.reduce((s,x)=>s+(x.cost||0)*x.qty,0);
   const tp=confirmed.reduce((s,x)=>s+x.profit,0);
-  const te=EXP.filter(e=>e.expense_date?.startsWith(curM)).reduce((s,e)=>s+e.amount,0);
+  const te=EXP.reduce((s,e)=>s+e.amount,0);
   document.getElementById('rr').textContent=fmt(tr);
   document.getElementById('rc').textContent=fmt(tc);
   document.getElementById('rp').textContent=fmt(tp);

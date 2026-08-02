@@ -273,6 +273,13 @@ tr:hover td{background:#fafafa;}
 
     <!-- HISTORY -->
     <div id="pan-hist" class="pan">
+      <div class="mg" style="margin-bottom:14px;">
+        <div class="mk"><div class="ml">عمليات الشهر</div><div class="mv" id="mto">0</div></div>
+        <div class="mk"><div class="ml">إيراد الشهر</div><div class="mv g" id="mtr">₪0.00</div></div>
+        <div class="mk"><div class="ml">ربح الشهر</div><div class="mv g" id="mtp">₪0.00</div></div>
+        <div class="mk"><div class="ml">نصيب محمد (40%)</div><div class="mv b" id="mts">₪0.00</div></div>
+        <div class="mk"><div class="ml">نصيب محمود (40%)</div><div class="mv b" id="mtm">₪0.00</div></div>
+      </div>
       <div class="fbar">
         <label>تصفية الشهر:</label>
         <select id="fil-month" onchange="renderHist()">
@@ -960,6 +967,15 @@ function renderHist(){
       return`<tr style="${rowStyle}"><td style="color:var(--tm);font-size:12px">${s.sale_date} ${t}${clearedBadge}</td><td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.item_name}">${s.item_name}</td><td>${fmt(s.total)}</td><td>${adj}</td><td>${profitDisplay}</td><td>${payBadge}</td><td><span class="wtag">${s.sold_by||'—'}</span></td><td><button onclick="showInvoice('${s.id}')" style="background:none;border:1px solid var(--bd);border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--b);">عرض</button></td><td><button onclick="openEditSale('${s.id}')" style="background:none;border:1px solid #fbbf24;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:#92400e;">✏️</button></td><td><button class="del" onclick="delSal('${s.id}')">×</button></td></tr>`;
     }).join('');
   }
+  // الإحصائيات — تستثني المُصفَّرة وقيد التوصيل
+  const active=filtered.filter(s=>!s.is_cleared&&s.payment_status!=='delivery');
+  const rev=active.reduce((s,x)=>s+x.total,0);
+  const profit=active.reduce((s,x)=>s+x.profit,0);
+  document.getElementById('mto').textContent=active.length;
+  document.getElementById('mtr').textContent=fmt(rev);
+  document.getElementById('mtp').textContent=fmt(profit);
+  document.getElementById('mts').textContent=fmt(profit*0.4);
+  document.getElementById('mtm').textContent=fmt(profit*0.4);
 }
 
 async function delSal(id){
@@ -1023,11 +1039,13 @@ function rRep(){
   const curActive=SAL.filter(s=>s.sale_date?.startsWith(curM)&&!s.is_cleared&&s.payment_status!=='delivery');
   const mRev=curActive.reduce((s,x)=>s+x.total,0);
   const mProfit=curActive.reduce((s,x)=>s+x.profit,0);
+  // ما عندكم ينفد للشهر الحالي — فقط إذا كان يوليو أو بعده
+  const mGod=curM>='2026-07'?mProfit*0.2:0;
   document.getElementById('rr-m').textContent=fmt(mRev);
   document.getElementById('rp-m').textContent=fmt(mProfit);
   document.getElementById('ry-m').textContent=fmt(mProfit*0.4);
   document.getElementById('rm-m').textContent=fmt(mProfit*0.4);
-  document.getElementById('rg-m').textContent=fmt(mProfit*0.2);
+  document.getElementById('rg-m').textContent=fmt(mGod);
   // جدول الفواتير — كل الفواتير منذ البداية
   const allConfirmed=allSales.filter(s=>s.payment_status!=='delivery');
   const tb=document.getElementById('rtb');
@@ -1045,12 +1063,15 @@ function rRep(){
   const tc=confirmed.reduce((s,x)=>s+(x.cost||0)*x.qty,0);
   const tp=confirmed.reduce((s,x)=>s+x.profit,0);
   const te=EXP.reduce((s,e)=>s+e.amount,0);
+  // ما عندكم ينفد — من يوليو 2026 فقط
+  const fromJuly=confirmed.filter(s=>s.sale_date>='2026-07');
+  const tpJuly=fromJuly.reduce((s,x)=>s+x.profit,0);
   document.getElementById('rr').textContent=fmt(tr);
   document.getElementById('rc').textContent=fmt(tc);
   document.getElementById('rp').textContent=fmt(tp);
   document.getElementById('ry').textContent=fmt(tp*0.4);
   document.getElementById('rm').textContent=fmt(tp*0.4);
-  document.getElementById('rg').textContent=fmt(tp*0.2);
+  document.getElementById('rg').textContent=fmt(tpJuly*0.2);
   document.getElementById('re').textContent=fmt(te);
 }
 

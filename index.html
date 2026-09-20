@@ -158,9 +158,11 @@ tr:hover td{background:#fafafa;}
     <button class="tb" onclick="go('sale')">🧾 فاتورة بيع</button>
     <button class="tb" onclick="go('pending')">🚚 قيد التوصيل</button>
     <button class="tb" onclick="go('hist')">📋 سجل المبيعات</button>
+    <button class="tb" onclick="go('collect')">💰 تحصيلات</button>
+    <button class="tb" onclick="go('prices')">🏷️ الأسعار</button>
     <button class="tb" onclick="go('exp')">💸 المصاريف</button>
     <button class="tb" onclick="go('charts')">📊 إحصائيات</button>
-    <button class="tb" onclick="go('rep')">💰 التقارير</button>
+    <button class="tb" onclick="go('rep')">📈 التقارير</button>
   </div>
   <div class="mc">
 
@@ -255,7 +257,10 @@ tr:hover td{background:#fafafa;}
           <span style="font-size:16px;font-weight:600;color:var(--b);" id="iv-profit-preview">₪0.00</span>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--tm);padding:4px 14px;">
-          <span>نصيب محمد</span><span id="iv-share-preview">₪0.00</span>
+          <span>نصيب محمد (40%)</span><span id="iv-share-preview">₪0.00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--tm);padding:4px 14px;">
+          <span>نصيب محمود (40%)</span><span id="iv-share-preview2">₪0.00</span>
         </div>
         <div class="adjrow" style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--bd);">
           <label>حالة الدفع:</label>
@@ -500,6 +505,132 @@ tr:hover td{background:#fafafa;}
       </div>
     </div>
 
+    <!-- COLLECTIONS -->
+    <div id="pan-collect" class="pan">
+      <!-- رصيد التحصيل -->
+      <div class="mg" style="margin-bottom:16px;">
+        <div class="mk" style="background:#f0fdf4;border-color:#86efac;">
+          <div class="ml" style="color:#166534;">رصيد محمد 💰</div>
+          <div class="mv g" id="col-bal-m">₪0.00</div>
+        </div>
+        <div class="mk" style="background:#f0fdf4;border-color:#86efac;">
+          <div class="ml" style="color:#166534;">رصيد محمود 💰</div>
+          <div class="mv g" id="col-bal-mh">₪0.00</div>
+        </div>
+        <div class="mk">
+          <div class="ml">إجمالي التحصيل</div>
+          <div class="mv a" id="col-total">₪0.00</div>
+        </div>
+        <div class="mk">
+          <div class="ml">تم استلامه</div>
+          <div class="mv g" id="col-received">₪0.00</div>
+        </div>
+        <div class="mk">
+          <div class="ml">قيد التحصيل</div>
+          <div class="mv r" id="col-pending">₪0.00</div>
+        </div>
+      </div>
+
+      <!-- إضافة تحصيل -->
+      <div class="fb">
+        <div class="fbt">إضافة تحصيل جديد</div>
+        <div class="fr">
+          <div class="f"><label>المبلغ ₪</label><input id="col-amt" type="number" min="0" step="any" placeholder="0" inputmode="decimal"/></div>
+          <div class="f" style="max-width:160px"><label>من قام بالاستلام</label>
+            <select id="col-by">
+              <option value="محمد">محمد</option>
+              <option value="محمود">محمود</option>
+            </select>
+          </div>
+          <div class="f" style="max-width:145px"><label>التاريخ</label><input id="col-date" type="date"/></div>
+          <div class="f"><label>ملاحظة</label><input id="col-note" type="text" placeholder="اختياري..."/></div>
+          <button class="ba" onclick="addCollection()">+ تسجيل</button>
+        </div>
+      </div>
+
+      <!-- تحويل رصيد -->
+      <div class="fb" style="background:#f8faff;">
+        <div class="fbt" style="color:var(--b);">↔️ تحويل رصيد بين الشركاء</div>
+        <div class="fr">
+          <div class="f" style="max-width:130px"><label>المبلغ ₪</label><input id="tr-amt" type="number" min="0" step="any" placeholder="0" inputmode="decimal"/></div>
+          <div class="f" style="max-width:130px"><label>من</label>
+            <select id="tr-from">
+              <option value="محمد">محمد</option>
+              <option value="محمود">محمود</option>
+            </select>
+          </div>
+          <div class="f" style="max-width:130px"><label>إلى</label>
+            <select id="tr-to">
+              <option value="محمود">محمود</option>
+              <option value="محمد">محمد</option>
+            </select>
+          </div>
+          <div class="f" style="max-width:140px"><label>طريقة التحويل</label>
+            <select id="tr-method">
+              <option>تحويل بنكي</option>
+              <option>كاش</option>
+              <option>محفظة إلكترونية</option>
+            </select>
+          </div>
+          <div class="f" style="max-width:145px"><label>التاريخ</label><input id="tr-date" type="date"/></div>
+          <div class="f"><label>ملاحظة</label><input id="tr-note" type="text" placeholder="اختياري..."/></div>
+          <button class="ba" onclick="addTransfer()" style="background:var(--b);">↔️ تحويل</button>
+        </div>
+      </div>
+
+      <!-- فلتر الشهر -->
+      <div class="fbar">
+        <label>تصفية الشهر:</label>
+        <select id="col-fil-month" onchange="renderCollections()">
+          <option value="2026-01">يناير 2026</option><option value="2026-02">فبراير 2026</option>
+          <option value="2026-03">مارس 2026</option><option value="2026-04">أبريل 2026</option>
+          <option value="2026-05">مايو 2026</option><option value="2026-06">يونيو 2026</option>
+          <option value="2026-07">يوليو 2026</option><option value="2026-08">أغسطس 2026</option>
+          <option value="2026-09">سبتمبر 2026</option><option value="2026-10">أكتوبر 2026</option>
+          <option value="2026-11">نوفمبر 2026</option><option value="2026-12">ديسمبر 2026</option>
+        </select>
+        <button class="bx" onclick="resetCollectMonth()">تصفير هذا الشهر</button>
+      </div>
+
+      <!-- جدول التحصيلات -->
+      <div class="tw" style="margin-bottom:14px;">
+        <table>
+          <thead><tr><th>التاريخ</th><th>المبلغ</th><th>المستلِم</th><th>الحالة</th><th>ملاحظة</th><th>تم الاستلام</th><th></th></tr></thead>
+          <tbody id="col-tb"><tr class="er"><td colspan="7">لا توجد تحصيلات بعد</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- جدول التحويلات -->
+      <div style="font-size:12px;font-weight:600;color:var(--b);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">↔️ سجل التحويلات</div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>التاريخ</th><th>المبلغ</th><th>من</th><th>إلى</th><th>الطريقة</th><th>ملاحظة</th><th></th></tr></thead>
+          <tbody id="tr-tb"><tr class="er"><td colspan="7">لا توجد تحويلات بعد</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRICES -->
+    <div id="pan-prices" class="pan">
+      <div class="fb">
+        <div class="fbt">إضافة / تحديث سعر</div>
+        <div class="fr">
+          <div class="f"><label>اسم الصنف</label><input id="pr-name" type="text" placeholder="مثال: علب مخللات 500غم"/></div>
+          <div class="f" style="max-width:130px"><label>السعر ₪</label><input id="pr-price" type="number" min="0" step="any" placeholder="0.00" inputmode="decimal"/></div>
+          <button class="ba" onclick="addPrice()">+ حفظ السعر</button>
+        </div>
+      </div>
+      <div class="mg">
+        <div class="mk"><div class="ml">عدد الأصناف</div><div class="mv" id="pr-count">0</div></div>
+      </div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>اسم الصنف</th><th>السعر ₪</th><th>آخر تحديث</th><th>حدّثه</th><th></th></tr></thead>
+          <tbody id="pr-tb"><tr class="er"><td colspan="5">لا توجد أسعار بعد</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- EXPENSES -->
     <div id="pan-exp" class="pan">
       <div class="fb">
@@ -587,7 +718,7 @@ const SB_URL='https://djkfccwfpcmzkcnbysck.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqa2ZjY3dmcGNtemtjbmJ5c2NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODY2NTUsImV4cCI6MjA5MjM2MjY1NX0.kgRX4LLmbnBEzX9qJOl9IbBpVagftN1Sm3sr6wpPW4M';
 const sb=supabase.createClient(SB_URL,SB_KEY);
 
-let CU=null,UN='',INV=[],SAL=[],EXP=[],PURCH=[],LINES=[];
+let CU=null,UN='',INV=[],SAL=[],EXP=[],PURCH=[],COLLECT=[],TRANSFERS=[],PRICES=[],LINES=[];
 let CH={};
 
 const fmt=n=>'₪'+parseFloat(n||0).toFixed(2);
@@ -639,26 +770,37 @@ async function boot(u){
   document.getElementById('app').style.display='flex';
   document.getElementById('edt').value=today();
   document.getElementById('fil-month').value=curMonth();
-  document.getElementById('pu-fil-month').value=curMonth();
+  document.getElementById('col-date').value=today();
+  document.getElementById('tr-date').value=today();
+  document.getElementById('col-fil-month').value=curMonth();
+  document.getElementById('col-date').value=today();
+  document.getElementById('tr-date').value=today();
   await load();
   sb.channel('rt')
     .on('postgres_changes',{event:'*',schema:'public',table:'inventory'},load)
     .on('postgres_changes',{event:'*',schema:'public',table:'sales'},load)
     .on('postgres_changes',{event:'*',schema:'public',table:'expenses'},load)
     .on('postgres_changes',{event:'*',schema:'public',table:'purchases'},load)
+    .on('postgres_changes',{event:'*',schema:'public',table:'collections'},load)
+    .on('postgres_changes',{event:'*',schema:'public',table:'transfers'},load)
+    .on('postgres_changes',{event:'*',schema:'public',table:'prices'},load)
     .subscribe();
   initIv();
 }
 
 async function load(){
   try{
-    const[a,b,c,d]=await Promise.all([
+    const[a,b,c,d,e,f,g]=await Promise.all([
       sb.from('inventory').select('*').order('created_at'),
       sb.from('sales').select('*').order('created_at',{ascending:false}),
       sb.from('expenses').select('*').order('expense_date',{ascending:false}),
-      sb.from('purchases').select('*').order('created_at',{ascending:false})
+      sb.from('purchases').select('*').order('created_at',{ascending:false}),
+      sb.from('collections').select('*').order('created_at',{ascending:false}),
+      sb.from('transfers').select('*').order('created_at',{ascending:false}),
+      sb.from('prices').select('*').order('item_name')
     ]);
     INV=a.data||[];SAL=b.data||[];EXP=c.data||[];PURCH=d.data||[];
+    COLLECT=e.data||[];TRANSFERS=f.data||[];PRICES=g.data||[];
     renderAll();
   }catch(e){console.error(e);}
 }
@@ -904,7 +1046,8 @@ function calcIv(){
   else if(pradjt==='sub'){finalProfit=baseProfit-pradjv;pradjprev=`-₪${pradjv.toFixed(2)}`;}
   document.getElementById('pradjp').textContent=pradjprev?`(تعديل الربح: ${pradjprev})`:'';
   document.getElementById('iv-profit-preview').textContent=fmt(finalProfit);
-  document.getElementById('iv-share-preview').textContent=fmt(finalProfit*0.5);
+  document.getElementById('iv-share-preview').textContent=fmt(finalProfit*0.4);
+  if(document.getElementById('iv-share-preview2')) document.getElementById('iv-share-preview2').textContent=fmt(finalProfit*0.4);
   return{sub,tot,adj:tot-sub,pradjt,pradjv};
 }
 
@@ -947,6 +1090,7 @@ function clearIv(){
   document.getElementById('pradjp').textContent='';
   document.getElementById('iv-profit-preview').textContent='₪0.00';
   document.getElementById('iv-share-preview').textContent='₪0.00';
+  if(document.getElementById('iv-share-preview2')) document.getElementById('iv-share-preview2').textContent='₪0.00';
   document.getElementById('ivtot').textContent='₪0.00';
 }
 
@@ -1385,10 +1529,123 @@ function editPending(id){
   document.getElementById('edit-modal').style.display='flex';
 }
 
-function renderAll(){rInv();renderHist();rExp();rRep();renderPurch();renderPending();if(document.getElementById('pan-charts').classList.contains('on'))rCharts();rLines();updatePuInvSelect();}
+// ── COLLECTIONS ──
+async function addCollection(){
+  const amt=parseFloat(document.getElementById('col-amt').value)||0;
+  const by=document.getElementById('col-by').value;
+  const date=document.getElementById('col-date').value||today();
+  const note=document.getElementById('col-note').value.trim();
+  if(!amt){alert('أدخل المبلغ');return;}
+  await sb.from('collections').insert({amount:amt,collected_by:by,collection_date:date,status:'pending',notes:note});
+  document.getElementById('col-amt').value='';
+  document.getElementById('col-note').value='';
+  await load();
+}
+
+async function confirmCollection(id){
+  if(!confirm('تأكيد استلام هذا التحصيل؟'))return;
+  await sb.from('collections').update({status:'received'}).eq('id',id);
+  await load();
+}
+
+async function delCollection(id){
+  if(!confirm('حذف هذا التحصيل؟'))return;
+  await sb.from('collections').delete().eq('id',id);
+  await load();
+}
+
+async function resetCollectMonth(){
+  const m=document.getElementById('col-fil-month').value;
+  const mn=document.querySelector('#col-fil-month option:checked').textContent;
+  if(!confirm(`تصفير تحصيلات ${mn}؟`))return;
+  const ids=COLLECT.filter(c=>c.collection_date?.startsWith(m)&&!c.is_cleared).map(c=>c.id);
+  if(!ids.length){alert('لا توجد تحصيلات في هذا الشهر');return;}
+  await sb.from('collections').update({is_cleared:true}).in('id',ids);
+  await load();
+}
+
+function renderCollections(){
+  const m=document.getElementById('col-fil-month').value;
+  const filtered=COLLECT.filter(c=>c.collection_date?.startsWith(m));
+  const tb=document.getElementById('col-tb');
+  if(!filtered.length){tb.innerHTML='<tr class="er"><td colspan="7">لا توجد تحصيلات</td></tr>';}
+  else{
+    tb.innerHTML=filtered.map(c=>{
+      const cleared=c.is_cleared?'<span style="background:#fee2e2;color:#b91c1c;font-size:10px;padding:2px 6px;border-radius:10px;">مُصفَّر</span>':'';
+      const rowStyle=c.is_cleared?'opacity:0.5;':'';
+      const statusBadge=c.status==='received'?'<span style="background:#DCFCE7;color:#166534;font-size:11px;padding:2px 8px;border-radius:10px;">✅ مستلم</span>':'<span style="background:#FEF9C3;color:#854D0E;font-size:11px;padding:2px 8px;border-radius:10px;">⏳ قيد التحصيل</span>';
+      const confirmBtn=c.status==='pending'?`<button onclick="confirmCollection('${c.id}')" style="background:#1D9E75;color:white;border:none;border-radius:5px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit;">✓ تم</button>`:'—';
+      return`<tr style="${rowStyle}"><td style="font-size:12px;color:var(--tm)">${c.collection_date}${cleared}</td><td style="font-weight:600;color:var(--g)">${fmt(c.amount)}</td><td><span class="wtag">${c.collected_by||'—'}</span></td><td>${statusBadge}</td><td style="font-size:12px;color:var(--tm)">${c.notes||'—'}</td><td>${confirmBtn}</td><td><button class="del" onclick="delCollection('${c.id}')">×</button></td></tr>`;
+    }).join('');
+  }
+  // رصيد كل شخص (مستلم فقط)
+  const received=COLLECT.filter(c=>c.status==='received'&&!c.is_cleared);
+  const balM=received.filter(c=>c.collected_by==='محمد').reduce((s,c)=>s+c.amount,0);
+  const balMh=received.filter(c=>c.collected_by==='محمود').reduce((s,c)=>s+c.amount,0);
+  // خصم التحويلات
+  const trM=TRANSFERS.filter(t=>t.from_person==='محمد').reduce((s,t)=>s+t.amount,0)-TRANSFERS.filter(t=>t.to_person==='محمد').reduce((s,t)=>s+t.amount,0);
+  const trMh=TRANSFERS.filter(t=>t.from_person==='محمود').reduce((s,t)=>s+t.amount,0)-TRANSFERS.filter(t=>t.to_person==='محمود').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('col-bal-m').textContent=fmt(balM-trM);
+  document.getElementById('col-bal-mh').textContent=fmt(balMh-trMh);
+  document.getElementById('col-total').textContent=fmt(COLLECT.filter(c=>!c.is_cleared).reduce((s,c)=>s+c.amount,0));
+  document.getElementById('col-received').textContent=fmt(received.reduce((s,c)=>s+c.amount,0));
+  document.getElementById('col-pending').textContent=fmt(COLLECT.filter(c=>c.status==='pending'&&!c.is_cleared).reduce((s,c)=>s+c.amount,0));
+  // التحويلات
+  const ttb=document.getElementById('tr-tb');
+  if(!TRANSFERS.length){ttb.innerHTML='<tr class="er"><td colspan="7">لا توجد تحويلات بعد</td></tr>';}
+  else{ttb.innerHTML=TRANSFERS.map(t=>`<tr><td style="font-size:12px;color:var(--tm)">${t.transfer_date}</td><td style="font-weight:600;color:var(--b)">${fmt(t.amount)}</td><td><span class="wtag">${t.from_person}</span></td><td><span class="wtag">${t.to_person}</span></td><td>${t.method}</td><td style="font-size:12px">${t.notes||'—'}</td><td><button class="del" onclick="delTransfer('${t.id}')">×</button></td></tr>`).join('');}
+}
+
+async function addTransfer(){
+  const amt=parseFloat(document.getElementById('tr-amt').value)||0;
+  const from=document.getElementById('tr-from').value;
+  const to=document.getElementById('tr-to').value;
+  const method=document.getElementById('tr-method').value;
+  const date=document.getElementById('tr-date').value||today();
+  const note=document.getElementById('tr-note').value.trim();
+  if(!amt){alert('أدخل مبلغ التحويل');return;}
+  if(from===to){alert('المرسل والمستلم نفس الشخص');return;}
+  await sb.from('transfers').insert({amount:amt,from_person:from,to_person:to,method,transfer_date:date,notes:note});
+  document.getElementById('tr-amt').value='';
+  document.getElementById('tr-note').value='';
+  await load();
+}
+
+async function delTransfer(id){
+  if(!confirm('حذف هذا التحويل؟'))return;
+  await sb.from('transfers').delete().eq('id',id);
+  await load();
+}
+
+// ── PRICES ──
+async function addPrice(){
+  const name=document.getElementById('pr-name').value.trim();
+  const price=parseFloat(document.getElementById('pr-price').value)||0;
+  if(!name||!price){alert('أدخل اسم الصنف والسعر');return;}
+  const ex=PRICES.find(p=>p.item_name===name);
+  if(ex){await sb.from('prices').update({price,updated_by:UN,updated_at:new Date().toISOString()}).eq('id',ex.id);}
+  else{await sb.from('prices').insert({item_name:name,price,updated_by:UN});}
+  document.getElementById('pr-name').value='';
+  document.getElementById('pr-price').value='';
+  await load();
+}
+
+async function delPrice(id){
+  if(!confirm('حذف هذا السعر؟'))return;
+  await sb.from('prices').delete().eq('id',id);
+  await load();
+}
+
+function renderPrices(){
+  const tb=document.getElementById('pr-tb');
+  if(!PRICES.length){tb.innerHTML='<tr class="er"><td colspan="5">لا توجد أسعار مسجّلة</td></tr>';}
+  else{tb.innerHTML=PRICES.map(p=>`<tr><td style="font-weight:600">${p.item_name}</td><td style="color:var(--g);font-weight:600;font-size:16px">${fmt(p.price)}</td><td style="font-size:12px;color:var(--tm)">${p.updated_at?new Date(p.updated_at).toLocaleDateString('ar-EG'):'—'}</td><td><span class="wtag">${p.updated_by||'—'}</span></td><td><button class="del" onclick="delPrice('${p.id}')">×</button></td></tr>`).join('');}
+}
+
+function renderAll(){rInv();renderHist();rExp();rRep();renderPurch();renderPending();renderCollections();renderPrices();if(document.getElementById('pan-charts').classList.contains('on'))rCharts();rLines();updatePuInvSelect();}
 
 function go(n){
-  const tabs=['inv','purch','sale','pending','hist','exp','charts','rep'];
+  const tabs=['inv','purch','sale','pending','hist','collect','prices','exp','charts','rep'];
   document.querySelectorAll('.tb').forEach((b,i)=>b.classList.toggle('on',tabs[i]===n));
   document.querySelectorAll('.pan').forEach(p=>p.classList.remove('on'));
   document.getElementById('pan-'+n).classList.add('on');
@@ -1396,6 +1653,8 @@ function go(n){
   if(n==='hist')renderHist();
   if(n==='purch'){renderPurch();updatePuInvSelect();}
   if(n==='pending')renderPending();
+  if(n==='collect')renderCollections();
+  if(n==='prices')renderPrices();
 }
 
 sb.auth.getSession().then(({data})=>{if(data.session)boot(data.session.user);});

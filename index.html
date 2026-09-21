@@ -159,7 +159,6 @@ tr:hover td{background:#fafafa;}
     <button class="tb" onclick="go('pending')">🚚 قيد التوصيل</button>
     <button class="tb" onclick="go('hist')">📋 سجل المبيعات</button>
     <button class="tb" onclick="go('collect')">💰 تحصيلات</button>
-    <button class="tb" onclick="go('prices')">🏷️ الأسعار</button>
     <button class="tb" onclick="go('exp')">💸 المصاريف</button>
     <button class="tb" onclick="go('charts')">📊 إحصائيات</button>
     <button class="tb" onclick="go('rep')">📈 التقارير</button>
@@ -606,27 +605,6 @@ tr:hover td{background:#fafafa;}
         <table>
           <thead><tr><th>التاريخ</th><th>المبلغ</th><th>من</th><th>إلى</th><th>الطريقة</th><th>ملاحظة</th><th></th></tr></thead>
           <tbody id="tr-tb"><tr class="er"><td colspan="7">لا توجد تحويلات بعد</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- PRICES -->
-    <div id="pan-prices" class="pan">
-      <div class="fb">
-        <div class="fbt">إضافة / تحديث سعر</div>
-        <div class="fr">
-          <div class="f"><label>اسم الصنف</label><input id="pr-name" type="text" placeholder="مثال: علب مخللات 500غم"/></div>
-          <div class="f" style="max-width:130px"><label>السعر ₪</label><input id="pr-price" type="number" min="0" step="any" placeholder="0.00" inputmode="decimal"/></div>
-          <button class="ba" onclick="addPrice()">+ حفظ السعر</button>
-        </div>
-      </div>
-      <div class="mg">
-        <div class="mk"><div class="ml">عدد الأصناف</div><div class="mv" id="pr-count">0</div></div>
-      </div>
-      <div class="tw">
-        <table>
-          <thead><tr><th>اسم الصنف</th><th>السعر ₪</th><th>آخر تحديث</th><th>حدّثه</th><th></th></tr></thead>
-          <tbody id="pr-tb"><tr class="er"><td colspan="5">لا توجد أسعار بعد</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1430,10 +1408,14 @@ async function addPurchase(){
   const pData={item_name:name,qty,unit_cost:cost,total,payment_method:method,linked_to_inventory:!!invLink,inventory_item_id:invLink||null,purchase_date:today(),added_by:UN};
   const{error}=await sb.from('purchases').insert(pData);
   if(error){alert('خطأ في الحفظ: '+error.message);return;}
-  // ربط بالمخزون إذا تم الاختيار
+  // ربط بالمخزون — تحديث الكمية وسعر الشراء تلقائياً
   if(invLink){
     const item=INV.find(i=>String(i.id)===invLink);
-    if(item) await sb.from('inventory').update({qty:item.qty+qty}).eq('id',item.id);
+    if(item){
+      const updateData={qty:item.qty+qty};
+      if(cost>0) updateData.cost=cost; // تحديث سعر الشراء بالجديد
+      await sb.from('inventory').update(updateData).eq('id',item.id);
+    }
   }
   document.getElementById('pu-name').value='';
   document.getElementById('pu-qty').value='1';
@@ -1642,10 +1624,10 @@ function renderPrices(){
   else{tb.innerHTML=PRICES.map(p=>`<tr><td style="font-weight:600">${p.item_name}</td><td style="color:var(--g);font-weight:600;font-size:16px">${fmt(p.price)}</td><td style="font-size:12px;color:var(--tm)">${p.updated_at?new Date(p.updated_at).toLocaleDateString('ar-EG'):'—'}</td><td><span class="wtag">${p.updated_by||'—'}</span></td><td><button class="del" onclick="delPrice('${p.id}')">×</button></td></tr>`).join('');}
 }
 
-function renderAll(){rInv();renderHist();rExp();rRep();renderPurch();renderPending();renderCollections();renderPrices();if(document.getElementById('pan-charts').classList.contains('on'))rCharts();rLines();updatePuInvSelect();}
+function renderAll(){rInv();renderHist();rExp();rRep();renderPurch();renderPending();renderCollections();if(document.getElementById('pan-charts').classList.contains('on'))rCharts();rLines();updatePuInvSelect();}
 
 function go(n){
-  const tabs=['inv','purch','sale','pending','hist','collect','prices','exp','charts','rep'];
+  const tabs=['inv','purch','sale','pending','hist','collect','exp','charts','rep'];
   document.querySelectorAll('.tb').forEach((b,i)=>b.classList.toggle('on',tabs[i]===n));
   document.querySelectorAll('.pan').forEach(p=>p.classList.remove('on'));
   document.getElementById('pan-'+n).classList.add('on');
@@ -1654,7 +1636,6 @@ function go(n){
   if(n==='purch'){renderPurch();updatePuInvSelect();}
   if(n==='pending')renderPending();
   if(n==='collect')renderCollections();
-  if(n==='prices')renderPrices();
 }
 
 sb.auth.getSession().then(({data})=>{if(data.session)boot(data.session.user);});

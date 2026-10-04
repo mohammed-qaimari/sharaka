@@ -1560,15 +1560,19 @@ function renderCollections(){
       return`<tr style="${rowStyle}"><td style="font-size:12px;color:var(--tm)">${c.collection_date}${cleared}</td><td style="font-weight:600;color:var(--g)">${fmt(c.amount)}</td><td><span class="wtag">${c.collected_by||'—'}</span></td><td>${statusBadge}</td><td style="font-size:12px;color:var(--tm)">${c.notes||'—'}</td><td>${confirmBtn}</td><td><button class="del" onclick="delCollection('${c.id}')">×</button></td></tr>`;
     }).join('');
   }
-  // رصيد كل شخص (مستلم فقط)
+  // رصيد كل شخص — فقط التحصيلات المستلمة وغير المصفّرة
   const received=COLLECT.filter(c=>c.status==='received'&&!c.is_cleared);
   const balM=received.filter(c=>c.collected_by==='محمد').reduce((s,c)=>s+c.amount,0);
   const balMh=received.filter(c=>c.collected_by==='محمود').reduce((s,c)=>s+c.amount,0);
-  // خصم التحويلات
-  const trM=TRANSFERS.filter(t=>t.from_person==='محمد').reduce((s,t)=>s+t.amount,0)-TRANSFERS.filter(t=>t.to_person==='محمد').reduce((s,t)=>s+t.amount,0);
-  const trMh=TRANSFERS.filter(t=>t.from_person==='محمود').reduce((s,t)=>s+t.amount,0)-TRANSFERS.filter(t=>t.to_person==='محمود').reduce((s,t)=>s+t.amount,0);
-  document.getElementById('col-bal-m').textContent=fmt(balM-trM);
-  document.getElementById('col-bal-mh').textContent=fmt(balMh-trMh);
+  // التحويلات: المُحوَّل منه ينقص، المُحوَّل إليه يزيد
+  const trMout=TRANSFERS.filter(t=>t.from_person==='محمد').reduce((s,t)=>s+t.amount,0);
+  const trMin=TRANSFERS.filter(t=>t.to_person==='محمد').reduce((s,t)=>s+t.amount,0);
+  const trMhout=TRANSFERS.filter(t=>t.from_person==='محمود').reduce((s,t)=>s+t.amount,0);
+  const trMhin=TRANSFERS.filter(t=>t.to_person==='محمود').reduce((s,t)=>s+t.amount,0);
+  const finalM=balM-trMout+trMin;
+  const finalMh=balMh-trMhout+trMhin;
+  document.getElementById('col-bal-m').textContent=fmt(Math.max(0,finalM));
+  document.getElementById('col-bal-mh').textContent=fmt(Math.max(0,finalMh));
   document.getElementById('col-total').textContent=fmt(COLLECT.filter(c=>!c.is_cleared).reduce((s,c)=>s+c.amount,0));
   document.getElementById('col-received').textContent=fmt(received.reduce((s,c)=>s+c.amount,0));
   document.getElementById('col-pending').textContent=fmt(COLLECT.filter(c=>c.status==='pending'&&!c.is_cleared).reduce((s,c)=>s+c.amount,0));

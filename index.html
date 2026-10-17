@@ -1539,47 +1539,57 @@ async function delCollection(id){
 async function resetCollectMonth(){
   const m=document.getElementById('col-fil-month').value;
   const mn=document.querySelector('#col-fil-month option:checked').textContent;
-  if(!confirm(`تصفير تحصيلات ${mn}؟`))return;
-  const ids=COLLECT.filter(c=>c.collection_date?.startsWith(m)&&!c.is_cleared).map(c=>c.id);
-  if(!ids.length){alert('لا توجد تحصيلات في هذا الشهر');return;}
-  await sb.from('collections').update({is_cleared:true}).in('id',ids);
+  if(!confirm(`تصفير تحصيلات وتحويلات ${mn}؟ ستبقى السجلات موجودة.`))return;
+  const colIds=COLLECT.filter(c=>c.collection_date?.startsWith(m)&&!c.is_cleared).map(c=>c.id);
+  const trIds=TRANSFERS.filter(t=>t.transfer_date?.startsWith(m)&&!t.is_cleared).map(t=>t.id);
+  const promises=[];
+  if(colIds.length) promises.push(sb.from('collections').update({is_cleared:true}).in('id',colIds));
+  if(trIds.length) promises.push(sb.from('transfers').update({is_cleared:true,transfer_month:m}).in('id',trIds));
+  if(!promises.length){alert('لا توجد بيانات في هذا الشهر');return;}
+  await Promise.all(promises);
   await load();
 }
 
 function renderCollections(){
   const m=document.getElementById('col-fil-month').value;
   const filtered=COLLECT.filter(c=>c.collection_date?.startsWith(m));
+  const filteredTr=TRANSFERS.filter(t=>t.transfer_date?.startsWith(m));
   const tb=document.getElementById('col-tb');
   if(!filtered.length){tb.innerHTML='<tr class="er"><td colspan="7">لا توجد تحصيلات</td></tr>';}
   else{
     tb.innerHTML=filtered.map(c=>{
-      const cleared=c.is_cleared?'<span style="background:#fee2e2;color:#b91c1c;font-size:10px;padding:2px 6px;border-radius:10px;">مُصفَّر</span>':'';
+      const cleared=c.is_cleared?'<span style="background:#fee2e2;color:#b91c1c;font-size:10px;padding:2px 6px;border-radius:10px;margin-right:4px;">مُصفَّر</span>':'';
       const rowStyle=c.is_cleared?'opacity:0.5;':'';
       const statusBadge=c.status==='received'?'<span style="background:#DCFCE7;color:#166534;font-size:11px;padding:2px 8px;border-radius:10px;">✅ مستلم</span>':'<span style="background:#FEF9C3;color:#854D0E;font-size:11px;padding:2px 8px;border-radius:10px;">⏳ قيد التحصيل</span>';
       const confirmBtn=c.status==='pending'?`<button onclick="confirmCollection('${c.id}')" style="background:#1D9E75;color:white;border:none;border-radius:5px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit;">✓ تم</button>`:'—';
       return`<tr style="${rowStyle}"><td style="font-size:12px;color:var(--tm)">${c.collection_date}${cleared}</td><td style="font-weight:600;color:var(--g)">${fmt(c.amount)}</td><td><span class="wtag">${c.collected_by||'—'}</span></td><td>${statusBadge}</td><td style="font-size:12px;color:var(--tm)">${c.notes||'—'}</td><td>${confirmBtn}</td><td><button class="del" onclick="delCollection('${c.id}')">×</button></td></tr>`;
     }).join('');
   }
-  // رصيد كل شخص — فقط التحصيلات المستلمة وغير المصفّرة
-  const received=COLLECT.filter(c=>c.status==='received'&&!c.is_cleared);
+  // رصيد كل شخص — فقط هذا الشهر وغير مصفّر
+  const received=filtered.filter(c=>c.status==='received'&&!c.is_cleared);
   const balM=received.filter(c=>c.collected_by==='محمد').reduce((s,c)=>s+c.amount,0);
   const balMh=received.filter(c=>c.collected_by==='محمود').reduce((s,c)=>s+c.amount,0);
-  // التحويلات: المُحوَّل منه ينقص، المُحوَّل إليه يزيد
-  const trMout=TRANSFERS.filter(t=>t.from_person==='محمد').reduce((s,t)=>s+t.amount,0);
-  const trMin=TRANSFERS.filter(t=>t.to_person==='محمد').reduce((s,t)=>s+t.amount,0);
-  const trMhout=TRANSFERS.filter(t=>t.from_person==='محمود').reduce((s,t)=>s+t.amount,0);
-  const trMhin=TRANSFERS.filter(t=>t.to_person==='محمود').reduce((s,t)=>s+t.amount,0);
+  // التحويلات الشهرية فقط وغير مصفّرة
+  const activeTr=filteredTr.filter(t=>!t.is_cleared);
+  const trMout=activeTr.filter(t=>t.from_person==='محمد').reduce((s,t)=>s+t.amount,0);
+  const trMin=activeTr.filter(t=>t.to_person==='محمد').reduce((s,t)=>s+t.amount,0);
+  const trMhout=activeTr.filter(t=>t.from_person==='محمود').reduce((s,t)=>s+t.amount,0);
+  const trMhin=activeTr.filter(t=>t.to_person==='محمود').reduce((s,t)=>s+t.amount,0);
   const finalM=balM-trMout+trMin;
   const finalMh=balMh-trMhout+trMhin;
-  document.getElementById('col-bal-m').textContent=fmt(Math.max(0,finalM));
-  document.getElementById('col-bal-mh').textContent=fmt(Math.max(0,finalMh));
-  document.getElementById('col-total').textContent=fmt(COLLECT.filter(c=>!c.is_cleared).reduce((s,c)=>s+c.amount,0));
+  document.getElementById('col-bal-m').textContent=fmt(finalM);
+  document.getElementById('col-bal-mh').textContent=fmt(finalMh);
+  document.getElementById('col-total').textContent=fmt(filtered.filter(c=>!c.is_cleared).reduce((s,c)=>s+c.amount,0));
   document.getElementById('col-received').textContent=fmt(received.reduce((s,c)=>s+c.amount,0));
-  document.getElementById('col-pending').textContent=fmt(COLLECT.filter(c=>c.status==='pending'&&!c.is_cleared).reduce((s,c)=>s+c.amount,0));
-  // التحويلات
+  document.getElementById('col-pending').textContent=fmt(filtered.filter(c=>c.status==='pending'&&!c.is_cleared).reduce((s,c)=>s+c.amount,0));
+  // التحويلات — هذا الشهر فقط
   const ttb=document.getElementById('tr-tb');
-  if(!TRANSFERS.length){ttb.innerHTML='<tr class="er"><td colspan="7">لا توجد تحويلات بعد</td></tr>';}
-  else{ttb.innerHTML=TRANSFERS.map(t=>`<tr><td style="font-size:12px;color:var(--tm)">${t.transfer_date}</td><td style="font-weight:600;color:var(--b)">${fmt(t.amount)}</td><td><span class="wtag">${t.from_person}</span></td><td><span class="wtag">${t.to_person}</span></td><td>${t.method}</td><td style="font-size:12px">${t.notes||'—'}</td><td><button class="del" onclick="delTransfer('${t.id}')">×</button></td></tr>`).join('');}
+  if(!filteredTr.length){ttb.innerHTML='<tr class="er"><td colspan="7">لا توجد تحويلات في هذا الشهر</td></tr>';}
+  else{ttb.innerHTML=filteredTr.map(t=>{
+    const cleared=t.is_cleared?'<span style="background:#fee2e2;color:#b91c1c;font-size:10px;padding:2px 6px;border-radius:10px;">مُصفَّر</span>':'';
+    const rowStyle=t.is_cleared?'opacity:0.5;':'';
+    return`<tr style="${rowStyle}"><td style="font-size:12px;color:var(--tm)">${t.transfer_date}${cleared}</td><td style="font-weight:600;color:var(--b)">${fmt(t.amount)}</td><td><span class="wtag">${t.from_person}</span></td><td><span class="wtag">${t.to_person}</span></td><td>${t.method}</td><td style="font-size:12px">${t.notes||'—'}</td><td><button class="del" onclick="delTransfer('${t.id}')">×</button></td></tr>`;
+  }).join('');}
 }
 
 async function addTransfer(){

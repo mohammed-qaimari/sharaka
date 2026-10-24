@@ -1575,10 +1575,11 @@ function renderCollections(){
   const trMin=activeTr.filter(t=>t.to_person==='محمد').reduce((s,t)=>s+t.amount,0);
   const trMhout=activeTr.filter(t=>t.from_person==='محمود').reduce((s,t)=>s+t.amount,0);
   const trMhin=activeTr.filter(t=>t.to_person==='محمود').reduce((s,t)=>s+t.amount,0);
-  const finalM=balM-trMout+trMin;
-  const finalMh=balMh-trMhout+trMhin;
-  document.getElementById('col-bal-m').textContent=fmt(finalM);
-  document.getElementById('col-bal-mh').textContent=fmt(finalMh);
+  // الرصيد = تحصيلات + تحويلات واردة - تحويلات صادرة (لا يقل عن صفر)
+  const finalM=balM+trMin-trMout;
+  const finalMh=balMh+trMhin-trMhout;
+  document.getElementById('col-bal-m').textContent=fmt(finalM<0?0:finalM);
+  document.getElementById('col-bal-mh').textContent=fmt(finalMh<0?0:finalMh);
   document.getElementById('col-total').textContent=fmt(filtered.filter(c=>!c.is_cleared).reduce((s,c)=>s+c.amount,0));
   document.getElementById('col-received').textContent=fmt(received.reduce((s,c)=>s+c.amount,0));
   document.getElementById('col-pending').textContent=fmt(filtered.filter(c=>c.status==='pending'&&!c.is_cleared).reduce((s,c)=>s+c.amount,0));
